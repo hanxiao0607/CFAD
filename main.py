@@ -1,22 +1,28 @@
 import torch
+import numpy as np
 from models import gae
+from utils import config_utils, utils, synthetic_dataset, trainer
+
 
 def main():
-    n, d = 3000, 20
+    args = config_utils.get_args()
 
-    model = gae.GAE(n, d, x_dim=1)
+    # Reproducibility
+    utils.set_seed(args.seed)
 
-    print(model.w_prime)
-    # print('model.sess: {}'.format(model.sess))
-    # print('model.train_op: {}'.format(model.train_op))
-    # print('model.loss: {}'.format(model.loss))
-    # print('model.mse_loss: {}'.format(model.mse_loss))
-    # print('model.h: {}'.format(model.h))
-    # print('model.W_prime: {}'.format(model.W_prime))
-    # print('model.X: {}'.format(model.X))
-    # print('model.rho: {}'.format(model.rho))
-    # print('model.alpha: {}'.format(model.alpha))
-    # print('model.lr: {}'.format(model.lr))
+    # Get dataset
+    dataset = synthetic_dataset.SyntheticDataset(args.n, args.d, args.graph_type, args.degree, args.sem_type,
+                               args.noise_scale, args.dataset_type, args.x_dim)
+    model = gae.GAE(args.n, args.d, args.x_dim, args.seed, args.num_encoder_layers, args.num_decoder_layers,
+                args.hidden_size, args.latent_dim, args.l1_graph_penalty, args.use_float64)
+
+    gae_trainer = trainer.GAETrainner(args.init_rho, args.rho_thres, args.h_thres, args.rho_multiply,
+                        args.init_iter, args.learning_rate, args.h_tol,
+                        args.early_stopping, args.early_stopping_thres)
+    W_est = gae_trainer.train(model, dataset.X, dataset.W, args.graph_thres,
+                          args.max_iter, args.iter_step)
+
+
 
     print('done')
 
