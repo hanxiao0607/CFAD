@@ -1,20 +1,18 @@
-import argparse
-import sys
-
+from argparse import ArgumentParser
 
 def get_args():
-    parser = argparse.ArgumentParser()
+    parser = ArgumentParser()
 
     ##### General settings #####
     parser.add_argument('--seed',
                         type=int,
-                        default=1230,
+                        default=0,
                         help='Random seed')
 
     ##### Dataset settings #####
     parser.add_argument('--n',
                         type=int,
-                        default=3000,
+                        default=10000,
                         help='Number of samples')
 
     parser.add_argument('--d',
@@ -29,7 +27,7 @@ def get_args():
 
     parser.add_argument('--degree',
                         type=int,
-                        default=3,
+                        default=5,
                         help='Degree of graph')
 
     parser.add_argument('--sem_type',
@@ -55,12 +53,12 @@ def get_args():
     ##### Model settings #####
     parser.add_argument('--num_encoder_layers',
                         type=int,
-                        default=2,
+                        default=5,
                         help='Number of hidden layers for encoder')
 
     parser.add_argument('--num_decoder_layers',
                         type=int,
-                        default=2,
+                        default=5,
                         help='Number of hidden layers for decoder')
 
     parser.add_argument('--hidden_size',
@@ -83,7 +81,7 @@ def get_args():
                         default=True,
                         help='Whether to use tf.float64 or tf.float32 during training')
 
-    ##### Training settings #####
+    ##### GAE Training settings #####
     parser.add_argument('--learning_rate',
                         type=float,
                         default=1e-3,
@@ -139,10 +137,55 @@ def get_args():
                         default=1.15,
                         help='Threshold ratio for early stopping')
 
-    ##### Other settings #####
     parser.add_argument('--graph_thres',
                         type=float,
                         default=0.2,
                         help='Threshold to filter out small values in graph')
 
-    return parser.parse_args(args=sys.argv[1:])
+    parser.add_argument('--device',
+                        type=str,
+                        default='cuda:0',
+                        help='Device type')
+
+    parser.add_argument('--alpha_cos',
+                        type=int,
+                        default=3,
+                        help='Times for cosine value')
+
+    parser.add_argument('--aae_hidden_dim',
+                        type=int,
+                        default=8,
+                        help='Hidden dimension for AAE')
+
+    parser.add_argument('--aae_pretrain_epochs',
+                        type=int,
+                        default=50,
+                        help='AAE max pre-training epochs')
+
+    parser.add_argument('--aae_retrain_epochs',
+                        type=int,
+                        default=20,
+                        help='AAE max re-training epochs')
+
+    parser.add_argument('--aae_alpha',
+                        type=float,
+                        default=1,
+                        help='AAE adversarial parameter')
+
+    parser.add_argument('--aae_beta',
+                        type=float,
+                        default=1,
+                        help='AAE reconstruction parameter')
+
+    parser.add_argument('--ae_retrain_lr',
+                         type=float,
+                         default=4e-6,
+                         help='autoencoder lr for retrain')
+
+    parser.add_argument('--discriminator_retrain_lr',
+                        type=float,
+                        default=1e-4,
+                        help='discriminator lr for retrain')
+
+
+    return parser
