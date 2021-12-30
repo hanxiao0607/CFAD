@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 from sklearn.metrics import classification_report, confusion_matrix, average_precision_score, roc_auc_score, f1_score
+from sklearn.preprocessing import StandardScaler
 
 
 def set_seed(seed = 0):
@@ -135,10 +136,14 @@ def get_samples(dataset, upper=None, lower=None):
     df_train = df_train.sample(n=len(df_train), random_state=42)
     df_eval_set = pd.concat([df_n_nc_major.iloc[0:1], df_n_c_major.iloc[0:1], \
                              df_n_nc_minor.iloc[0:1], df_n_c_minor.iloc[0:1]])
-    df_test_n = pd.concat([df_n_nc_major.iloc[10000:11000], df_n_c_major.iloc[1000:2000], \
-                           df_n_nc_minor.iloc[1000:2000], df_n_c_minor.iloc[100:1100]])
-    df_test_ab = pd.concat([df_ab_nc_major.iloc[:1000], df_ab_c_major.iloc[:1000], \
-                            df_ab_nc_minor.iloc[:1000], df_ab_c_minor.iloc[:1000]])
+    # df_test_n = pd.concat([df_n_nc_major.iloc[10000:11000], df_n_c_major.iloc[1000:2000], \
+    #                        df_n_nc_minor.iloc[1000:2000], df_n_c_minor.iloc[100:1100]])
+    # df_test_ab = pd.concat([df_ab_nc_major.iloc[:100], df_ab_c_major.iloc[:100], \
+    #                         df_ab_nc_minor.iloc[:100], df_ab_c_minor.iloc[:100]])
+    df_test_n = pd.concat([df_n_nc_major.iloc[10000:10000], df_n_c_major.iloc[1000:2000], \
+                           df_n_nc_minor.iloc[1000:1000], df_n_c_minor.iloc[100:1100]])
+    df_test_ab = pd.concat([df_ab_nc_major.iloc[:0], df_ab_c_major.iloc[:100], \
+                            df_ab_nc_minor.iloc[:0], df_ab_c_minor.iloc[:100]])
 
     df_train_cf = df_n_cf.loc[df_train.index]
     df_eval_set_cf = df_n_cf.loc[df_eval_set.index]
@@ -172,60 +177,99 @@ class CFDataset(Dataset):
         return (self.X[idx], self.do[idx])
 
 
-def pretrain_split(df_train, df_eval):
-    train_X = df_train.iloc[:, 1:-3].values.astype(np.float32)
+def pretrain_split(df_train, df_eval, scaler):
+    train_X = scaler.fit_transform(df_train.iloc[:, 1:-3].values.astype(np.float32))
     lst_temp = [1 for _ in range(len(train_X))]
 
     train_iter = DataLoader(CFDataset(torch.tensor(train_X.astype(np.float32)), torch.LongTensor(lst_temp)),
                             batch_size=128, shuffle=True, worker_init_fn=np.random.seed(0))
-    print(len(train_X))
-    eval_X = df_eval.iloc[:, 1:-3].values.astype(np.float32)
+    # print(len(train_X))
+    eval_X = scaler.transform(df_eval.iloc[:, 1:-3].values.astype(np.float32))
     lst_temp = [1 for _ in range(len(eval_X))]
 
     eval_iter = DataLoader(CFDataset(torch.tensor(eval_X.astype(np.float32)), torch.LongTensor(lst_temp)),
                            batch_size=32, shuffle=False)
-    return train_iter, eval_iter
+    return train_iter, eval_iter, scaler
 
-def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[]):
-    R_aae = aae_trainer.max_dist
-    test_iter = DataLoader(df_test.iloc[:, 1:-3].values.astype(np.float32), batch_size=32, shuffle=False)
-    lst_pred = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
+def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None):
+    R_aae = aae_trainer.max_dist * ratio
+    test_iter = DataLoader(scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32)), batch_size=32, shuffle=False)
+    lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
     print('Original')
     print(classification_report(y_true=df_test['label'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['label'], y_pred=lst_pred))
-    print(f"AUC-PR: {average_precision_score(y_true=df_test['label'], y_score=lst_pred)}")
-    print(f"AUC-ROC: {roc_auc_score(y_true=df_test['label'], y_score=lst_pred)}")
+    print(f"AUC-PR: {average_precision_score(y_true=df_test['label'], y_score=lst_score)}")
+    print(f"AUC-ROC: {roc_auc_score(y_true=df_test['label'], y_score=lst_score)}")
     df_org = pd.DataFrame()
     df_org['label'] = df_test['label'].values
     df_org['pred'] = lst_pred
 
-    test_do = gaes.net.get_result(
-        torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
-        do=1).detach().cpu().numpy()
-    test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
-    lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
-    print('Do')
-    print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
-    print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
-    print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    df_org['pred_do'] = lst_pred
+    # test_do = gaes.net.get_result(
+    #     torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
+    #     do=1).detach().cpu().numpy()
+    # test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
+    # lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+    # print('Do')
+    # print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
+    # print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
+    # print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+    # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+    # df_org['pred_do'] = lst_pred
 
 
     if len(df_test_cf) >= 1:
-        test_iter = DataLoader(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19), batch_size=32,
+        test_iter = DataLoader(scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19)), batch_size=32,
                                shuffle=False)
-        lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+        lst_pred, lst_score  = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
         print('CF')
         print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
         print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
-        print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-        print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+        print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_score)}")
+        print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_score)}")
         df_org['pred_cf'] = lst_pred
 
     return df_org
 
-def retrain_split(gaes, df_train, df_eval):
+def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None):
+    R_aae = aae_trainer.max_dist * ratio
+    test_iter = DataLoader(scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32)), batch_size=32, shuffle=False)
+    lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
+    print('Original')
+    print(classification_report(y_true=df_test['label'], y_pred=lst_pred, digits=5))
+    print(confusion_matrix(y_true=df_test['label'], y_pred=lst_pred))
+    print(f"AUC-PR: {average_precision_score(y_true=df_test['label'], y_score=lst_score)}")
+    print(f"AUC-ROC: {roc_auc_score(y_true=df_test['label'], y_score=lst_score)}")
+    df_org = pd.DataFrame()
+    df_org['label'] = df_test['label'].values
+    df_org['pred'] = lst_pred
+
+    # test_do = gaes.net.get_result(
+    #     torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
+    #     do=1).detach().cpu().numpy()
+    # test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
+    # lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+    # print('Do')
+    # print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
+    # print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
+    # print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+    # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+    # df_org['pred_do'] = lst_pred
+
+
+    if len(df_test_cf) >= 1:
+        test_iter = DataLoader(scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19)), batch_size=32,
+                               shuffle=False)
+        lst_pred, lst_score  = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+        print('CF')
+        print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
+        print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
+        print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_score)}")
+        print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_score)}")
+        df_org['pred_cf'] = lst_pred
+
+    return df_org
+
+def retrain_split(gaes, df_train, df_eval, scaler):
     X_do = gaes.net.get_result(torch.Tensor(df_train.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
                                do=1).detach().cpu().numpy().reshape(-1, 20)[:, 1:]
     # X_do = np.delete(X_do, df_train_cf.loc[df_train_cf['label'] == 1].index, axis=0)
@@ -233,7 +277,7 @@ def retrain_split(gaes, df_train, df_eval):
     train_X_or = df_train.iloc[:, 1:-3].values.astype(np.float32)
     lst_temp = [1 for _ in range(len(train_X_do))]
     lst_temp.extend([0 for _ in range(len(train_X_or))])
-    train_X = np.concatenate((train_X_do, train_X_or), axis=0)
+    train_X = scaler.transform(np.concatenate((train_X_do, train_X_or), axis=0))
 
     train_iter = DataLoader(CFDataset(torch.tensor(train_X.astype(np.float32)), torch.LongTensor(lst_temp)),
                             batch_size=128, shuffle=True, worker_init_fn=np.random.seed(0))
@@ -244,64 +288,64 @@ def retrain_split(gaes, df_train, df_eval):
     eval_X_or = df_eval.iloc[:, 1:-3].values.astype(np.float32)
     lst_temp = [1 for _ in range(len(eval_X_do))]
     lst_temp.extend([0 for _ in range(len(eval_X_or))])
-    eval_X = np.concatenate((eval_X_do, eval_X_or), axis=0)
+    eval_X = scaler.transform(np.concatenate((eval_X_do, eval_X_or), axis=0))
 
     eval_iter = DataLoader(CFDataset(torch.tensor(eval_X.astype(np.float32)), torch.LongTensor(lst_temp)),
                            batch_size=32, shuffle=False)
 
     return train_iter, eval_iter
 
-def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[]):
-    R_aae = aae_trainer.max_dist
-    test_iter = DataLoader(df_test.iloc[:, 1:-3].values.astype(np.float32), batch_size=32, shuffle=False)
-    lst_pred = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
+def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None):
+    R_aae = aae_trainer.max_dist * ratio
+    test_iter = DataLoader(scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32)), batch_size=32, shuffle=False)
+    lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
     print('Original')
     print(classification_report(y_true=df_test['label'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['label'], y_pred=lst_pred))
-    print(f"AUC-PR: {average_precision_score(y_true=df_test['label'], y_score=lst_pred)}")
-    print(f"AUC-ROC: {roc_auc_score(y_true=df_test['label'], y_score=lst_pred)}")
+    print(f"AUC-PR: {average_precision_score(y_true=df_test['label'], y_score=lst_score)}")
+    print(f"AUC-ROC: {roc_auc_score(y_true=df_test['label'], y_score=lst_score)}")
     df_ad = pd.DataFrame()
     df_ad['label'] = df_test['label'].values
     df_ad['pred'] = lst_pred
 
-    test_do = gaes.net.get_result(
-        torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
-        do=1).detach().cpu().numpy()
-    test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
-    lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
-    print('Do')
-    print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
-    print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
-    print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    df_ad['pred_do'] = lst_pred
+    # test_do = gaes.net.get_result(
+    #     torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
+    #     do=1).detach().cpu().numpy()
+    # test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
+    # lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+    # print('Do')
+    # print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
+    # print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
+    # print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+    # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+    # df_ad['pred_do'] = lst_pred
 
     if len(df_test_cf) >= 1:
-        test_iter = DataLoader(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19), batch_size=32,
+        test_iter = DataLoader(scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19)), batch_size=32,
                                shuffle=False)
-        lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+        lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
         print('CF')
         print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
         print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
-        print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-        print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
+        print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_score)}")
+        print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_score)}")
         df_ad['pred_cf'] = lst_pred
 
     return df_ad
 
 
 def get_fairness_result(df_org, df_ad, cf=0):
-    df_org['do_changed'] = df_org['pred_do'] - df_org['pred']
-    df_ad['do_changed'] = df_ad['pred_do'] - df_ad['pred']
+    # df_org['do_changed'] = df_org['pred_do'] - df_org['pred']
+    # df_ad['do_changed'] = df_ad['pred_do'] - df_ad['pred']
     assert len(df_org) == len(df_ad), 'Length should be the same!'
     total = len(df_org)
-    df_org_do = df_org.groupby(['do_changed']).count().reset_index(drop=False)
-    before_do = sum(df_org_do.loc[df_org_do['do_changed'] != 0]['label'].values)
-    df_ad_do = df_ad.groupby(['do_changed']).count().reset_index(drop=False)
-    after_do = sum(df_ad_do.loc[df_ad_do['do_changed'] != 0]['label'].values)
-    print('Results for DO samples')
-    print(f'Without fair, the prediction changed: {before_do/total}')
-    print(f'With fair, the prediction changed: {after_do/total}')
+    # df_org_do = df_org.groupby(['do_changed']).count().reset_index(drop=False)
+    # before_do = sum(df_org_do.loc[df_org_do['do_changed'] != 0]['label'].values)
+    # df_ad_do = df_ad.groupby(['do_changed']).count().reset_index(drop=False)
+    # after_do = sum(df_ad_do.loc[df_ad_do['do_changed'] != 0]['label'].values)
+    # print('Results for DO samples')
+    # print(f'Without fair, the prediction changed: {before_do/total}')
+    # print(f'With fair, the prediction changed: {after_do/total}')
 
 
     if cf:
@@ -314,3 +358,37 @@ def get_fairness_result(df_org, df_ad, cf=0):
         print('Results for CF samples')
         print(f'Without fair, the prediction changed: {before_cf / total}')
         print(f'With fair, the prediction changed: {after_cf / total}')
+
+
+def get_fairness_result_correct(df_org, df_ad, cf=0):
+    # df_org['do_changed'] = df_org['pred_do'] - df_org['pred']
+    # df_ad['do_changed'] = df_ad['pred_do'] - df_ad['pred']
+    assert len(df_org) == len(df_ad), 'Length should be the same!'
+    total = len(df_org)
+    # df_org_do = df_org.groupby(['do_changed']).count().reset_index(drop=False)
+    # before_do = sum(df_org_do.loc[df_org_do['do_changed'] != 0]['label'].values)
+    # df_ad_do = df_ad.groupby(['do_changed']).count().reset_index(drop=False)
+    # after_do = sum(df_ad_do.loc[df_ad_do['do_changed'] != 0]['label'].values)
+    # print('Results for DO samples')
+    # print(f'Without fair, the prediction changed: {before_do/total}')
+    # print(f'With fair, the prediction changed: {after_do/total}')
+
+
+    if cf:
+        df_org['cf_changed'] = df_org['pred_cf'] - df_org['pred']
+        df_ad['cf_changed'] = df_ad['pred_cf'] - df_ad['pred']
+        df_org_c = df_org.loc[np.where(df_org['pred'].values == df_org['label'].values)]
+        df_org_c = df_org_c.loc[df_org_c['label'] == 1]
+        df_org_cf = df_org_c.groupby(['cf_changed']).count().reset_index(drop=False)
+        before_cf = sum(df_org_cf.loc[df_org_cf['cf_changed'] != 0]['label'].values)
+        df_ad_c = df_ad.loc[np.where(df_ad['pred'].values == df_ad['label'].values)]
+        df_ad_c = df_ad_c.loc[df_ad_c['label'] == 1]
+        df_ad_cf = df_ad_c.groupby(['cf_changed']).count().reset_index(drop=False)
+        after_cf = sum(df_ad_cf.loc[df_ad_cf['cf_changed'] != 0]['label'].values)
+        print('Results for CF samples')
+        print(before_cf)
+        print(after_cf)
+        print(len(df_org_c))
+        print(len(df_ad_c))
+        print(f'Without fair, the prediction changed: {before_cf / len(df_org_c)}')
+        print(f'With fair, the prediction changed: {after_cf / len(df_ad_c)}')

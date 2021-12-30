@@ -179,7 +179,7 @@ def get_args():
 
     parser.add_argument('--ae_retrain_lr',
                          type=float,
-                         default=4e-6,
+                         default=1e-7,
                          help='autoencoder lr for retrain')
 
     parser.add_argument('--discriminator_retrain_lr',

@@ -30,7 +30,7 @@ class GAESTrainner(object):
     def train(self):
         self.net.train()
         best_loss = float('inf')
-        for i in tqdm(range(self.max_epoch)):
+        for i in range(self.max_epoch):
             epoch_loss = 0
             samples = torch.FloatTensor(self.X).to(self.device)
             self.optimizer.zero_grad()
