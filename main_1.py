@@ -14,7 +14,7 @@ def main():
 
     # Get dataset
     print('Starting generate synthetic data')
-    dataset = synthetic_dataset.SyntheticDataset(options['n'] * 200, options['d'], options['graph_type'], options['degree'], options['sem_type'],
+    dataset = synthetic_dataset.SyntheticDataset(options['n'] * 2200, options['d'], options['graph_type'], options['degree'], options['sem_type'],
                                options['noise_scale'], options['dataset_type'], options['x_dim'], options['alpha_cos'])
     print('Finish generating synthetic data')
     print('Starting split synthetic data')
@@ -22,7 +22,7 @@ def main():
     print('Initial GAE')
     gae = GAE.GAE(len(df_train), options['d'], options['x_dim'], options['seed'], options['num_encoder_layers'],
                         options['num_decoder_layers'],
-                        options['hidden_size'], options['latent_dim'], options['l1_graph_penalty'], options['learning_rate'])
+                        options['hidden_size'], options['latent_dim'], options['l1_graph_penalty'], options['learning_rate'], options['device'])
 
     gae_trainer = GAE_trainer.GAETrainner(options['init_rho'], options['rho_thres'], options['h_thres'], options['rho_multiply'],
                               options['init_iter'], options['learning_rate'], options['h_tol'],
@@ -43,16 +43,17 @@ def main():
     analyze_utils.plot_recovered_graph(W_est, dataset.W,
                          save_name='output/thresholded_recovered_graph.png')
     results_thresholded = analyze_utils.count_accuracy(dataset.W, W_est)
+
     # lst_lr = [1e-7, 2e-7, 3e-7, 4e-7, 5e-7, 6e-7, 7e-7, 8e-7, 9e-7, 1e-6]
     lst_lr = [1e-7]
-    lst_ratio = [0.95, 0.96, 0.97, 0.975, 0.98, 0.985, 0.99, 0.995, 0.999, 1]
+    lst_ratio = [0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995, 0.999, 1]
     # lst_ratio = [0.995]
 
     print('Start training GAES')
     gaes = GAES_trainer.GAESTrainner(gae.net.encoder,
                                      df_train.iloc[:, :-3].values.reshape(-1, options['d'], options['x_dim']),
                                      W_est_old,
-                                     max_epoch=200, n=len(df_train), d=options['d'])
+                                     max_epoch=200, n=len(df_train), d=options['d'], device=options['device'])
     gaes.train()
     scaler = StandardScaler()
     for en_lr in lst_lr:
@@ -62,16 +63,16 @@ def main():
 
             print('Start pretrain AAE')
             train_iter, eval_iter, scaler = utils.pretrain_split(df_train, df_eval, scaler)
-            aae_trainer = AAE_trainer.AAETrainer(options['d']-1, options['aae_hidden_dim'], options['aae_pretrain_epochs'], quantile=ratio, alpha=options['aae_alpha'], beta=options['aae_beta'])
+            aae_trainer = AAE_trainer.AAETrainer(options['d']-1, options['aae_hidden_dim'], options['aae_pretrain_epochs'], quantile=ratio, device=options['device'], alpha=options['aae_alpha'], beta=options['aae_beta'])
             aae_trainer._train(train_iter, eval_iter, pretrain=1)
             print('Pre-training results')
             df_org = utils.get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf, 1, scaler)
             print('Start retrain AAE')
-            train_iter, eval_iter = utils.retrain_split(gaes, df_train, df_eval, scaler)
+            train_iter, eval_iter = utils.retrain_split(gaes, df_train, df_eval, scaler, device=options['device'])
             aae_trainer.epochs = options['aae_retrain_epochs']
             aae_trainer._train(train_iter, eval_iter, pretrain=0, ae_lr=en_lr, disc_lr=options['discriminator_retrain_lr'])
             df_ad = utils.get_retrain_result(gaes, aae_trainer, df_test, df_test_cf, 1, scaler)
-            utils.get_fairness_result_correct(df_org, df_ad, cf=1)
+            utils.get_fairness_result(df_org, df_ad, cf=1)
     print('done')
 
 if __name__ == '__main__':

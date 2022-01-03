@@ -144,7 +144,7 @@ def get_args():
 
     parser.add_argument('--device',
                         type=str,
-                        default='cuda:0',
+                        default='cuda:1',
                         help='Device type')
 
     parser.add_argument('--alpha_cos',
@@ -169,7 +169,7 @@ def get_args():
 
     parser.add_argument('--aae_alpha',
                         type=float,
-                        default=1,
+                        default=0.1,
                         help='AAE adversarial parameter')
 
     parser.add_argument('--aae_beta',
@@ -186,6 +186,11 @@ def get_args():
                         type=float,
                         default=1e-4,
                         help='discriminator lr for retrain')
+
+    parser.add_argument('--quantile',
+                        type=float,
+                        default=0.95,
+                        help='quantile for reconstruction error')
 
 
     return parser

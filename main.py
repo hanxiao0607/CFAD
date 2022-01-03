@@ -14,7 +14,7 @@ def main():
 
     # Get dataset
     print('Starting generate synthetic data')
-    dataset = synthetic_dataset.SyntheticDataset(options['n'] * 200, options['d'], options['graph_type'], options['degree'], options['sem_type'],
+    dataset = synthetic_dataset.SyntheticDataset(options['n'] * 1000, options['d'], options['graph_type'], options['degree'], options['sem_type'],
                                options['noise_scale'], options['dataset_type'], options['x_dim'], options['alpha_cos'])
     print('Finish generating synthetic data')
     print('Starting split synthetic data')
@@ -51,12 +51,12 @@ def main():
     print('Start pretrain AAE')
     scaler = StandardScaler()
     train_iter, eval_iter, scaler = utils.pretrain_split(df_train, df_eval, scaler)
-    aae_trainer = AAE_trainer.AAETrainer(options['d']-1, options['aae_hidden_dim'], options['aae_pretrain_epochs'], alpha=options['aae_alpha'], beta=options['aae_beta'])
+    aae_trainer = AAE_trainer.AAETrainer(options['d']-1, options['aae_hidden_dim'], options['aae_pretrain_epochs'], quantile=options['quantile'], device=options['device'], alpha=options['aae_alpha'], beta=options['aae_beta'])
     aae_trainer._train(train_iter, eval_iter, pretrain=1)
     print('Pre-training results')
     df_org = utils.get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf, 1, scaler)
     print('Start retrain AAE')
-    train_iter, eval_iter = utils.retrain_split(gaes, df_train, df_eval, scaler)
+    train_iter, eval_iter = utils.retrain_split(gaes, df_train, df_eval, scaler, device=options['device'])
     aae_trainer.epochs = options['aae_retrain_epochs']
     aae_trainer._train(train_iter, eval_iter, pretrain=0, ae_lr=options['ae_retrain_lr'], disc_lr=options['discriminator_retrain_lr'])
     df_ad = utils.get_retrain_result(gaes, aae_trainer, df_test, df_test_cf, 1, scaler)

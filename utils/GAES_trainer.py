@@ -19,7 +19,7 @@ class GAESTrainner(object):
         self.weight_decay = weight_decay
 
         self.name = name
-        self.net = GAES.GAES(encoder, self.W, n, d, len(X[0][0])).to(self.device)
+        self.net = GAES.GAES(encoder, self.W, n, d, len(X[0][0]), device=device).to(self.device)
         for param in self.net.encoder.parameters():
             param.requires_grad = False
 

@@ -128,7 +128,7 @@ class GAES(nn.Module):
                     if len(parents) == 0:
                         X_do_hat[:, j, 0] = torch.reshape(X_do, (-1, self.d, 1)).cpu()[:, j, 0].clone()
                     elif len(parents) == 1:
-                        H = torch.reshape(self.encoder.forward(torch.reshape(X_do_hat.cuda(), (-1, 1))),
+                        H = torch.reshape(self.encoder.forward(torch.reshape(X_do_hat.to(self.device), (-1, 1))),
                                           (-1, self.d, 1))
                         #                         H_c = torch.reshape(H[:, parents, 0]*self.A_norm[parents, j], (-1, 1))
                         #                         X_do_hat[:, j, 0] = torch.flatten(self.decoder.forward(H_c).cpu()).clone() + X_noise[:, j, 0]
@@ -136,7 +136,7 @@ class GAES(nn.Module):
                         X_do_hat[:, j, 0] = torch.flatten(
                             (self.decoder.forward(H_c) * self.A_norm[parents, j]).cpu()).clone() + X_noise[:, j, 0]
                     else:
-                        H = torch.reshape(self.encoder.forward(torch.reshape(X_do_hat.cuda(), (-1, 1))),
+                        H = torch.reshape(self.encoder.forward(torch.reshape(X_do_hat.to(self.device), (-1, 1))),
                                           (-1, self.d, 1))
                         #                         H_c = torch.reshape(H[:, parents, 0].matmul(self.A_norm[parents, j]), (-1, 1))
                         #                         X_do_hat[:, j, 0] = torch.flatten(self.decoder.forward(H_c).cpu()).clone() + X_noise[:, j, 0]
