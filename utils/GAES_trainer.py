@@ -20,8 +20,8 @@ class GAESTrainner(object):
 
         self.name = name
         self.net = GAES.GAES(encoder, self.W, n, d, len(X[0][0]), device=device).to(self.device)
-        for param in self.net.encoder.parameters():
-            param.requires_grad = False
+        # for param in self.net.encoder.parameters():
+        #     param.requires_grad = False
 
         self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.net.parameters()),
                                           weight_decay=self.weight_decay)

@@ -90,7 +90,7 @@ class Net(nn.Module):
 
 class GAE(object):
     def __init__(self, n, d, x_dim, seed=0, num_encoder_layer=1, num_decoder_layer=1, hidden_dim=5, latent_dim=1,
-                 l1_graph_penalty=0, lr=0.001, device='cuda:0'):
+                 l1_graph_penalty=0, lr=0.001, device='cuda:0', n_feature=1):
         super(GAE, self).__init__()
         self.n = n
         self.d = d
@@ -111,6 +111,7 @@ class GAE(object):
         # for name, param in self.net.named_parameters():
         #     if param.requires_grad:
         #         print(name)
+        self.n_features = n_feature
 
     def _get_mse(self, X, output):
         return torch.square(torch.norm(X - output))
@@ -125,6 +126,8 @@ class GAE(object):
     def _process_W_prime(self):
         with torch.no_grad():
             self.net.W_prime = self.net.W_prime.fill_diagonal_(0.)
+            if self.n_features > 1:
+                self.net.W_prime[:, :self.n_features] = 0.0
 
     def _train(self, X, rho, alpha, optim):
 

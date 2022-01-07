@@ -46,7 +46,7 @@ class GAETrainner(object):
             W_thresholded = np.copy(W_est)
             W_thresholded = W_thresholded / np.max(np.abs(W_thresholded))
             W_thresholded[np.abs(W_thresholded) < graph_thres] = 0
-            results = analyze_utils.count_accuracy(W, W_thresholded)
+            # results = analyze_utils.count_accuracy(W, W_thresholded)
             # print(f'tpr:{results["tpr"]}, fdr:{results["fdr"]}, shd:{results["shd"]}, pred_size:{results["pred_size"]}')
 
         torch.save(model, f'./saved_models/{name}')

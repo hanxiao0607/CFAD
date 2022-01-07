@@ -46,6 +46,7 @@ class GAES(nn.Module):
                 break
             except:
                 self.graph_thres += 0.01
+        print(self.graph_thres)
 
     def _define_net(self, encoder=1):
         if encoder:

@@ -220,10 +220,10 @@ def Train(model, train_input, labels, attribute, epochs, batch, with_weight=Fals
 
                 if with_weight:
                     objective = ks * self_reconstruction_loss + kf * discriminator_loss + clustering_regularizer_loss
-                    L = objective.mean()
-                    # L = torch.sum(torch.mul(objective, weight))
+                    # L = objective.mean()
+                    L = torch.sum(torch.mul(objective, weight))
                 else:
-                    objective = self_reconstruction_loss + clustering_regularizer_loss
+                    objective = ks * self_reconstruction_loss + kf * discriminator_loss + clustering_regularizer_loss
                     L = objective.mean()
                 optimizer.zero_grad()
                 L.backward()
@@ -245,7 +245,7 @@ def Train(model, train_input, labels, attribute, epochs, batch, with_weight=Fals
     print('Done Training.')
     return normal_dist
 
-def get_abdist(model, train_input, Y):
+def get_abdist(model, train_input, Y, quantile=0.95):
     torch.cuda.empty_cache()
     model.eval()
     model.setValidateMode(True)
@@ -253,7 +253,7 @@ def get_abdist(model, train_input, Y):
     xe = model(model_input.float())
     _, dist = model.getDistanceToClusters(xe)
     model.setValidateMode(False)
-    return np.quantile(acc(Y, dist)[-1], 0.95)
+    return np.quantile(acc(Y, dist)[-1], quantile)
 
 def validate(model, eval_input, Y, normal_dist):
     """
@@ -313,15 +313,17 @@ def main():
     scaler = StandardScaler()
 
     # Get dataset
-    print('Starting generate synthetic data')
-    dataset = synthetic_dataset.SyntheticDataset(options['n'] * 200, options['d'], options['graph_type'],
-                                                 options['degree'], options['sem_type'],
-                                                 options['noise_scale'], options['dataset_type'], options['x_dim'],
-                                                 options['alpha_cos'])
-    print('Finish generating synthetic data')
-    print('Starting split synthetic data')
-    df_train, df_eval, df_test, df_eval_set, df_train_cf, df_eval_cf, df_test_cf, df_eval_set_cf = utils.get_samples(
-        dataset)
+    # print('Starting generate synthetic data')
+    # dataset = synthetic_dataset.SyntheticDataset(options['n'] * 2500, options['d'], options['graph_type'],
+    #                                              options['degree'], options['sem_type'],
+    #                                              options['noise_scale'], options['dataset_type'], options['x_dim'],
+    #                                              options['alpha_cos'])
+    # print('Finish generating synthetic data')
+    # print('Starting split synthetic data')
+    # df_train, df_eval, df_test, df_eval_set, df_train_cf, df_eval_cf, df_test_cf, df_eval_set_cf = utils.get_samples(
+    #     dataset)
+    print('Start loading synthetic data')
+    df_train, df_test, df_test_cf = utils.load_data()
 
     with_weight = 'true'
     if with_weight == 'true':
@@ -346,44 +348,60 @@ def main():
     feature_dimension = X_norm.shape[1]
     embedded_dimension = 64
     num_subgroups = len(set(sensitive_attribute_group))
-    # configuration = 90, 64 if X_norm.shape[0] < 10000 else 40, 256
     configuration = 90, 64 if X_norm.shape[0] < 10000 else 40, 256
 
     model = DCFOD(feature_dimension, num_centroid, embedded_dimension, num_subgroups, cuda)
     normal_dist = Train(model, X_norm, Y, sensitive_attribute_group, configuration[0], configuration[1], with_weight=False)
 
+    quantile = 0.95
+    R = get_abdist(model, X_norm, Y, quantile)
     test_X = scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32))
     test_Y = df_test['label'].values
-    _, _, unf_pred = validate(model, test_X, test_Y, 0.55)
+    AUC, PR, pred = validate(model, test_X, test_Y, R)
+    print('DCOD training results:')
+    print(f'AUC value: {AUC}')
+    print(f'PR: {PR}')
+    print(classification_report(test_Y, pred, digits=5))
+    print(confusion_matrix(test_Y, pred))
+    test_X = scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32))
+    test_Y = df_test['label'].values
+    _, _, unf_pred = validate(model, test_X, test_Y, normal_dist)
     test_X_cf = scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32))
+    # test_X_cf = df_test_cf.iloc[:, 1:-3].values.astype(np.float32)
     test_Y_cf = df_test_cf['label'].values
-    unf_AUC, unf_PR, unf_pred_cf = validate(model, test_X_cf, test_Y_cf, 0.55)
-    print('Before fairness training results:')
+    unf_AUC, unf_PR, unf_pred_cf = validate(model, test_X_cf, test_Y_cf, R)
+    print('DCOD fairness training results:')
     print(f'AUC value: {unf_AUC}')
     print(f'PR: {unf_PR}')
-    print(classification_report(test_Y_cf, unf_pred_cf))
+    print(classification_report(test_Y_cf, unf_pred_cf, digits=5))
     print(confusion_matrix(test_Y_cf, unf_pred_cf))
     df_org = pd.DataFrame()
     df_org['label'] = test_Y
-    df_org['pred'] = unf_pred
+    df_org['pred'] = pred
     df_org['pred_cf'] = unf_pred_cf
 
-    print('Start fairness training')
-    model = DCFOD(feature_dimension, num_centroid, embedded_dimension, num_subgroups, cuda)
-    normal_dist = Train(model, X_norm, Y, sensitive_attribute_group, configuration[0], configuration[1],
+    print('Start DCFOD training')
+    model_f = DCFOD(feature_dimension, num_centroid, embedded_dimension, num_subgroups, cuda)
+    normal_dist = Train(model_f, X_norm, Y, sensitive_attribute_group, configuration[0], configuration[1],
                         with_weight=True)
-    _, _, f_pred = validate(model, test_X, test_Y, 0.55)
-    f_AUC, f_PR, f_pred_cf = validate(model, test_X_cf, test_Y_cf, 0.55)
-    print('Before fairness training results:')
+    R = get_abdist(model_f, X_norm, Y, quantile)
+    AUC, PR, f_pred = validate(model_f, test_X, test_Y, R)
+    print('DCFOD training results :')
+    print(f'AUC value: {AUC}')
+    print(f'PR: {PR}')
+    print(classification_report(test_Y, f_pred, digits=5))
+    print(confusion_matrix(test_Y, f_pred))
+    f_AUC, f_PR, f_pred_cf = validate(model_f, test_X_cf, test_Y_cf, R)
+    print('DCFOD training results CF:')
     print(f'AUC value: {f_AUC}')
     print(f'PR: {f_PR}')
-    print(classification_report(test_Y_cf, f_pred_cf))
+    print(classification_report(test_Y_cf, f_pred_cf, digits=5))
     print(confusion_matrix(test_Y_cf, f_pred_cf))
     df_ad = pd.DataFrame()
     df_ad['label'] = test_Y
     df_ad['pred'] = f_pred
     df_ad['pred_cf'] = f_pred_cf
-    total = len(df_org)
+    total = len(df_ad)
     df_org['cf_changed'] = df_org['pred_cf'] - df_org['pred']
     df_ad['cf_changed'] = df_ad['pred_cf'] - df_ad['pred']
     df_org_cf = df_org.groupby(['cf_changed']).count().reset_index(drop=False)
@@ -391,9 +409,8 @@ def main():
     df_ad_cf = df_ad.groupby(['cf_changed']).count().reset_index(drop=False)
     after_cf = sum(df_ad_cf.loc[df_ad_cf['cf_changed'] != 0]['label'].values)
     print('Results for CF samples')
-    print(f'Without fair, the prediction changed: {before_cf / total}')
-    print(f'With fair, the prediction changed: {after_cf / total}')
-
+    print(f'DCOD, the prediction changed: {before_cf / total}')
+    print(f'DCFOD, the prediction changed: {after_cf / total}')
 
 
 if __name__ == '__main__':
