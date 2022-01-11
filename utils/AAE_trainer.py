@@ -44,7 +44,7 @@ class AAETrainer(nn.Module):
                 if pretrain:
                     loss = loss1
                 else:
-                    loss = loss1 * self.beta + loss2
+                    loss = loss1 + loss2 * self.beta
                 loss.backward()
                 optimizer.step()
                 loss_mse_lst.append(loss1.item())

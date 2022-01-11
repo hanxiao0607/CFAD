@@ -338,7 +338,7 @@ def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scale
     print(f"AUC-PR: {average_precision_score(y_true=df_test['label'], y_score=lst_score)}")
     print(f"AUC-ROC: {roc_auc_score(y_true=df_test['label'], y_score=lst_score)}")
     df_ad = pd.DataFrame()
-    df_ad['label'] = df_test['y'].values
+    df_ad['label'] = df_test['label'].values
     df_ad['pred'] = lst_pred
 
     # test_do = gaes.net.get_result(
@@ -470,5 +470,6 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
     df_ab = df_data.loc[df_data['y'] == 1].copy()
     df_ab.iloc[:, 1:-1] = scaler.transform(df_ab.iloc[:, 1:-1].values)
     df_train = df_n.iloc[:n_train]
-    df_test = pd.concat([df_n.iloc[n_train:n_train+n_train], df_ab.iloc[:n_test]])
+    # df_test = pd.concat([df_n.iloc[n_train:n_train+4000], df_ab.iloc[:800]])
+    df_test = pd.concat([df_n.iloc[n_train:n_train+n_train], df_ab.iloc[:int(0.2*n_train)]])
     return df_train, df_test

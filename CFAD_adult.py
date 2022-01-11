@@ -42,12 +42,14 @@ def main():
     analyze_utils.plot_recovered_graph(W_est, W_est,
                                        save_name='output/thresholded_recovered_graph.png')
 
+    analyze_utils.plot_single_graph(W_est, save_name='output/adult_A.png')
+
     print('Start training GAES')
     gaes = GAES_trainer.GAESTrainner(gae.net.encoder,
                                      df_train.iloc[:, :-1].values.reshape(-1, options['d'], options['x_dim']).astype(
                                          np.float32), W_est_old,
                                      max_epoch=200, n=len(df_train), d=options['d'], device=options['device'],
-                                     weight_decay=0)
+                                     weight_decay=0, adult=1)
     gaes.train()
     test_do = gaes.net.get_result(
         torch.Tensor(df_test.iloc[:, :-1].values.astype(np.float32).reshape(len(df_test), -1, 1)).to(options['device']),

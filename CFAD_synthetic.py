@@ -42,6 +42,7 @@ def main():
 
     analyze_utils.plot_recovered_graph(W_est, dataset.W,
                          save_name='output/thresholded_recovered_graph.png')
+    analyze_utils.plot_single_graph(W_est, save_name='output/synthetic_A.png')
     results_thresholded = analyze_utils.count_accuracy(dataset.W, W_est)
 
     print('Start training GAES')

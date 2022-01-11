@@ -45,10 +45,12 @@ def main():
     results_thresholded = analyze_utils.count_accuracy(dataset.W, W_est)
 
     # lst_lr = [1e-7, 2e-7, 3e-7, 4e-7, 5e-7, 6e-7, 7e-7, 8e-7, 9e-7, 1e-6]
-    lst_lr = [1e-7]
-    lst_ratio = [0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995, 0.999]
-    lst_ratio.reverse()
-    # lst_ratio = [0.995]
+    lst_lr = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
+    lst_alpha = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+    # lst_lr = [1e-7]
+    # lst_ratio = [0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995, 0.999]
+    lst_ratio = [0.95]
+    # lst_ratio.reverse()
 
     print('Start training GAES')
     gaes = GAES_trainer.GAESTrainner(gae.net.encoder,
@@ -57,21 +59,21 @@ def main():
                                      max_epoch=200, n=len(df_train), d=options['d'], device=options['device'])
     gaes.train()
     scaler = StandardScaler()
-    for en_lr in lst_lr:
+    for alpha in lst_alpha:
         for ratio in lst_ratio:
             print('-'*60)
-            print(f'results for lr:{en_lr}, ratio:{ratio}')
+            print(f'results for lr:{alpha}, ratio:{ratio}')
 
             print('Start pretrain AAE')
             train_iter, eval_iter, scaler = utils.pretrain_split(df_train, df_eval, scaler)
-            aae_trainer = AAE_trainer.AAETrainer(options['d']-1, options['aae_hidden_dim'], options['aae_pretrain_epochs'], quantile=ratio, device=options['device'], alpha=options['aae_alpha'], beta=options['aae_beta'])
+            aae_trainer = AAE_trainer.AAETrainer(options['d']-1, options['aae_hidden_dim'], options['aae_pretrain_epochs'], quantile=ratio, device=options['device'], alpha=options['aae_alpha'], beta=alpha)
             aae_trainer._train(train_iter, eval_iter, pretrain=1)
             print('Pre-training results')
             df_org = utils.get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf, 1, scaler)
             print('Start retrain AAE')
             train_iter, eval_iter = utils.retrain_split(gaes, df_train, df_eval, scaler, device=options['device'])
             aae_trainer.epochs = options['aae_retrain_epochs']
-            aae_trainer._train(train_iter, eval_iter, pretrain=0, ae_lr=en_lr, disc_lr=options['discriminator_retrain_lr'])
+            aae_trainer._train(train_iter, eval_iter, pretrain=0, ae_lr=options['ae_retrain_lr'], disc_lr=options['discriminator_retrain_lr'])
             df_ad = utils.get_retrain_result(gaes, aae_trainer, df_test, df_test_cf, 1, scaler)
             utils.get_fairness_result(df_org, df_ad, cf=1)
     print('done')

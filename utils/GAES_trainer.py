@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 class GAESTrainner(object):
     def __init__(self, encoder, X, W, max_epoch, n, d, device='cuda:0', seed=0, weight_decay=1e-1,
-                 name='gaes_checkpoint.pt'):
+                 name='gaes_checkpoint.pt', adult=0):
         self.X = X
         self.W = torch.FloatTensor(W).to(device)
         self.max_epoch = max_epoch
@@ -20,8 +20,9 @@ class GAESTrainner(object):
 
         self.name = name
         self.net = GAES.GAES(encoder, self.W, n, d, len(X[0][0]), device=device).to(self.device)
-        # for param in self.net.encoder.parameters():
-        #     param.requires_grad = False
+        if not adult:
+            for param in self.net.encoder.parameters():
+                param.requires_grad = False
 
         self.optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.net.parameters()),
                                           weight_decay=self.weight_decay)

@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 
 def count_accuracy(W_true, W_est, W_und=None):
@@ -89,3 +90,20 @@ def plot_recovered_graph(W_est, W, save_name=None):
 
     if save_name is not None:
         fig.savefig(save_name)
+
+def plot_single_graph(W_est, save_name=None):
+    fig, ax1 = plt.subplots(figsize=(8, 8), ncols=1)
+
+    # ax1.set_title('recovered_graph')
+    map1 = ax1.imshow(W_est, cmap='Greys', interpolation='none', vmin=-1.0, vmax=1.0)
+    cbar = fig.colorbar(map1, ax=ax1,fraction=0.046, pad=0.04)
+    cbar.ax.tick_params(labelsize=12)
+    ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    plt.show()
+
+    if save_name is not None:
+        fig.savefig(save_name, dpi=300, bbox_inches='tight', pad_inches=0.01)
