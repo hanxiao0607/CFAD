@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from . import analyze_utils
+from sklearn.metrics import mean_squared_error
 
 
 class GAETrainner(object):
@@ -42,11 +43,12 @@ class GAETrainner(object):
                 print(f'Early stopping at {i}-th iteration')
                 break
 
-            # print(f'Iter {i}, rho {rho}, alpha {alpha}, h {h}, loss {loss_new}, mse {mse_new}')
+            print(f'Iter {i}, rho {rho}, alpha {alpha}, h {h}, loss {loss_new}, mse {mse_new}')
             W_thresholded = np.copy(W_est)
             W_thresholded = W_thresholded / np.max(np.abs(W_thresholded))
             W_thresholded[np.abs(W_thresholded) < graph_thres] = 0
             # results = analyze_utils.count_accuracy(W, W_thresholded)
+            # print(f'MSE for A: {mean_squared_error(W_thresholded, W)}')
             # print(f'tpr:{results["tpr"]}, fdr:{results["fdr"]}, shd:{results["shd"]}, pred_size:{results["pred_size"]}')
 
         torch.save(model, f'./saved_models/{name}')
