@@ -10,40 +10,20 @@ def get_args():
                         help='Random seed')
 
     ##### Dataset settings #####
-    parser.add_argument('--n',
+    parser.add_argument('--n_train',
                         type=int,
-                        default=10000,
-                        help='Number of samples')
+                        default=2000,
+                        help='Number of training samples')
+
+    parser.add_argument('--n_test',
+                        type=int,
+                        default=1000,
+                        help='Number of testing samples')
 
     parser.add_argument('--d',
                         type=int,
-                        default=20,
+                        default=8,
                         help='Number of nodes')
-
-    parser.add_argument('--graph_type',
-                        type=str,
-                        default='erdos-renyi',
-                        help='Type of graph')
-
-    parser.add_argument('--degree',
-                        type=int,
-                        default=5,
-                        help='Degree of graph')
-
-    parser.add_argument('--sem_type',
-                        type=str,
-                        default='linear-gauss',
-                        help='Type of sem')
-
-    parser.add_argument('--noise_scale',
-                        type=float,
-                        default=1.0,
-                        help='Variance of Gaussian Noise')
-
-    parser.add_argument('--dataset_type',
-                        type=str,
-                        default='nonlinear_1',
-                        help='Choose between nonlinear_1, nonlinear_2, nonlinear_3')
 
     parser.add_argument('--x_dim',
                         type=int,
@@ -63,7 +43,7 @@ def get_args():
 
     parser.add_argument('--hidden_size',
                         type=int,
-                        default=16,
+                        default=64,
                         help='Hidden size for NN layers')
 
     parser.add_argument('--latent_dim',
@@ -73,7 +53,7 @@ def get_args():
 
     parser.add_argument('--l1_graph_penalty',
                         type=float,
-                        default=1.0,
+                        default=0.0,
                         help='L1 penalty for sparse graph. Set to 0 to disable')
 
     parser.add_argument('--use_float64',
@@ -84,12 +64,12 @@ def get_args():
     ##### GAE Training settings #####
     parser.add_argument('--learning_rate',
                         type=float,
-                        default=1e-3,
+                        default=1e-5,
                         help='Learning rate for Adam optimizer')
 
     parser.add_argument('--max_iter',
                         type=int,
-                        default=20,
+                        default=200,
                         help='Number of iterations for training/optimization')
 
     parser.add_argument('--iter_step',
@@ -99,7 +79,7 @@ def get_args():
 
     parser.add_argument('--init_iter',
                         type=int,
-                        default=5,
+                        default=2,
                         help='Initial iterations to disable early stopping')
 
     parser.add_argument('--h_tol',
@@ -139,7 +119,7 @@ def get_args():
 
     parser.add_argument('--graph_thres',
                         type=float,
-                        default=0.2,
+                        default=0.3,
                         help='Threshold to filter out small values in graph')
 
     parser.add_argument('--device',
@@ -147,19 +127,20 @@ def get_args():
                         default='cuda:0',
                         help='Device type')
 
-    parser.add_argument('--alpha_cos',
+    parser.add_argument('--n_feature',
                         type=int,
                         default=3,
-                        help='Times for cosine value')
+                        help='Features without father')
+
 
     parser.add_argument('--aae_hidden_dim',
                         type=int,
-                        default=8,
+                        default=4,
                         help='Hidden dimension for AAE')
 
     parser.add_argument('--aae_pretrain_epochs',
                         type=int,
-                        default=50,
+                        default=100,
                         help='AAE max pre-training epochs')
 
     parser.add_argument('--aae_retrain_epochs',
@@ -189,7 +170,7 @@ def get_args():
 
     parser.add_argument('--quantile',
                         type=float,
-                        default=0.95,
+                        default=0.75,
                         help='quantile for reconstruction error')
 
 

@@ -428,15 +428,21 @@ def get_fairness_result(df_org, df_ad, cf=0):
         print(f'Without fair, the prediction changed: {before_cf / total}')
         print(f'With fair, the prediction changed: {after_cf / total}')
 
-def load_data(adult=0):
-    if not adult:
+def load_data(flag=0):
+    if flag == 0:
         df_train = pd.read_csv('../data/train.csv', index_col=0)
         df_test = pd.read_csv('../data/test.csv', index_col=0)
         df_test_cf = pd.read_csv('../data/test_cf.csv', index_col=0)
-    else:
+    elif flag == 1:
         df_train = pd.read_csv('../data/adult_train.csv', index_col=0)
         df_test = pd.read_csv('../data/adult_test.csv', index_col=0)
         df_test_cf = pd.read_csv('../data/adult_do.csv', index_col=0)
+    elif flag == 2:
+        df_train = pd.read_csv('../data/compas_train.csv', index_col=0)
+        df_test = pd.read_csv('../data/compas_test.csv', index_col=0)
+        df_test_cf = pd.read_csv('../data/compas_do.csv', index_col=0)
+    else:
+        print('Please given a number from 0 to 2. 0 for synthetic, 1 for adult, and 2 for compas.')
     return df_train, df_test, df_test_cf
 
 def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
@@ -463,6 +469,7 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
                        'relationship', 'capital-gain', 'capital-loss',
                        'hours-per-week', 'y']]
     scaler = MinMaxScaler((-3,3))
+    # scaler = MinMaxScaler()
     df_data = df_data.sample(n=len(df_data), random_state=42)
     df_data['y'] = df_data['y'].astype(int)
     df_n = df_data.loc[df_data['y'] == 0].copy()
@@ -471,5 +478,31 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
     df_ab.iloc[:, 1:-1] = scaler.transform(df_ab.iloc[:, 1:-1].values)
     df_train = df_n.iloc[:n_train]
     # df_test = pd.concat([df_n.iloc[n_train:n_train+4000], df_ab.iloc[:800]])
-    df_test = pd.concat([df_n.iloc[n_train:n_train+n_train], df_ab.iloc[:int(0.2*n_train)]])
+    df_test = pd.concat([df_n.iloc[n_train:n_train+n_test], df_ab.iloc[:int(0.2*n_test)]])
+    return df_train, df_test
+
+
+def compas_preprocessing(dir='data/compas-scores-two-years.txt', n_train=2000, n_test=2000):
+    df = pd.read_csv(dir, usecols=['race', 'sex', 'age', 'juv_fel_count', 'decile_score', 'juv_misd_count',
+                                   'juv_other_count', 'priors_count', 'two_year_recid'])
+    df_sel = df.loc[df['race'].isin(['African-American', 'Caucasian'])]
+    df_sel = df_sel[['race', 'sex', 'age', 'juv_fel_count', 'decile_score', 'juv_misd_count', 'juv_other_count',
+                     'priors_count','two_year_recid']]
+    df_sel.rename(columns={'two_year_recid':'y'}, inplace=True)
+    df_sel.loc[df_sel['race'] == 'African-American', 'race'] = 1
+    df_sel.loc[df_sel['race'] == 'Caucasian', 'race'] = 0
+    df_sel.loc[df_sel['sex'] == 'Male', 'sex'] = 0
+    df_sel.loc[df_sel['sex'] == 'Female', 'sex'] = 1
+    df_sel.reset_index(drop=True, inplace=True)
+    # scaler = MinMaxScaler((-3, 3))
+    scaler = MinMaxScaler()
+    df_sel.iloc[:,1:-1] = scaler.fit_transform(df_sel.iloc[:,1:-1].values)
+    df_n = df_sel.loc[df_sel['y'] == 0]
+    df_n = df_n.sample(len(df_n), random_state=42)
+    df_ab = df_sel.loc[df_sel['y'] == 1]
+    df_ab = df_ab.sample(len(df_ab), random_state=42)
+    df_train = df_n.iloc[:n_train]
+    df_test = pd.concat([df_n.iloc[n_train:n_train+n_test], df_ab.iloc[:int(0.2*n_test)]])
+    df_train.reset_index(drop=True, inplace=True)
+    df_test.reset_index(drop=True, inplace=True)
     return df_train, df_test

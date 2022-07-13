@@ -1,7 +1,7 @@
 from utils import adult_config, utils, GAE_trainer, analyze_utils, GAES_trainer, AAE_trainer
 from models import GAE
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import torch
 
 
@@ -49,10 +49,11 @@ def main():
         torch.Tensor(df_test.iloc[:, :-1].values.astype(np.float32).reshape(len(df_test), -1, 1)).to(options['device']),
         do=1).detach().cpu().numpy().reshape(len(df_test), -1)[:, 1:]
 
-    # lst_ratio = [0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995, 0.999]
-    lst_ratio =[0.95]
+    lst_ratio = [0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995, 0.999]
+    # lst_ratio =[0.95]
     lst_lr = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
-    lst_alpha = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+    # lst_alpha = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+    lst_alpha = [1]
     # lst_ratio.reverse()
     for alpha in lst_alpha:
         for ratio in lst_ratio:

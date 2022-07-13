@@ -17,7 +17,7 @@ def get_args():
 
     parser.add_argument('--n_test',
                         type=int,
-                        default=2400,
+                        default=4000,
                         help='Number of testing samples')
 
     parser.add_argument('--d',
@@ -140,7 +140,7 @@ def get_args():
 
     parser.add_argument('--aae_pretrain_epochs',
                         type=int,
-                        default=50,
+                        default=100,
                         help='AAE max pre-training epochs')
 
     parser.add_argument('--aae_retrain_epochs',
