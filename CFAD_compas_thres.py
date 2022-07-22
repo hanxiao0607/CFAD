@@ -49,8 +49,9 @@ def main():
         torch.Tensor(df_test.iloc[:, :-1].values.astype(np.float32).reshape(len(df_test), -1, 1)).to(options['device']),
         do=1).detach().cpu().numpy().reshape(len(df_test), -1)[:, 1:]
 
-    lst_ratio = [0.50, 0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-    # lst_ratio =[0.95]
+    lst_ratio = [0.80, 0.85, 0.90, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995, 0.999]
+    # lst_ratio = [0.75, 0.80, 0.85, 0.90, 0.95, 0.975, 0.99]
+    # lst_ratio =[0.7]
     lst_lr = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
     # lst_alpha = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]
     lst_alpha = [1]
@@ -60,12 +61,13 @@ def main():
             print('-' * 60)
             print(f'results for lr:{alpha}, ratio:{ratio}')
             print('Start pretrain AAE')
+            utils.set_seed(options['seed'])
             scaler = StandardScaler()
             train_iter, eval_iter, scaler = utils.pretrain_split(df_train.iloc[:int(0.9 * len(df_train))],
                                                                  df_train.iloc[int(0.9 * len(df_train)):], scaler, 1)
             aae_trainer = AAE_trainer.AAETrainer(options['d'] - 1, options['aae_hidden_dim'], options['aae_pretrain_epochs'],
                                                  quantile=ratio, device=options['device'],
-                                                 alpha=options['aae_alpha'], beta=alpha)
+                                                 alpha=options['aae_alpha'], beta=options['aae_beta'])
             aae_trainer._train(train_iter, eval_iter, pretrain=1)
             print('Pre-training results')
             df_org = utils.get_pretrain_results_adult(aae_trainer, df_test, test_do)

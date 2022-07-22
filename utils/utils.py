@@ -202,7 +202,7 @@ def pretrain_split(df_train, df_eval, scaler, adult=0):
         lst_temp = [1 for _ in range(len(train_X))]
 
         train_iter = DataLoader(CFDataset(torch.tensor(train_X.astype(np.float32)), torch.LongTensor(lst_temp)),
-                                batch_size=128, shuffle=True, worker_init_fn=np.random.seed(0))
+                                batch_size=128, shuffle=False, worker_init_fn=np.random.seed(0))
         # print(len(train_X))
         eval_X = df_eval.iloc[:, 1:-1].values.astype(np.float32)
         lst_temp = [1 for _ in range(len(eval_X))]
@@ -211,10 +211,11 @@ def pretrain_split(df_train, df_eval, scaler, adult=0):
                                batch_size=32, shuffle=False)
     return train_iter, eval_iter, scaler
 
-def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None, device='cuda:0'):
+def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None, val=0):
     R_aae = aae_trainer.max_dist * ratio
     test_iter = DataLoader(scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32)), batch_size=32, shuffle=False)
     lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
+    lst_val = lst_score.copy()
     print('Original')
     print(classification_report(y_true=df_test['label'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['label'], y_pred=lst_pred))
@@ -247,15 +248,18 @@ def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scal
         print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_score)}")
         print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_score)}")
         df_org['pred_cf'] = lst_pred
+    if val == 0:
+        return df_org
+    else:
+        return df_org, df_test, lst_val, R_aae
 
-    return df_org
 
-
-def get_pretrain_results_adult(aae_trainer, df_test, test_do):
+def get_pretrain_results_adult(aae_trainer, df_test, test_do, val=0):
     R_aae = aae_trainer.max_dist
     test_iter = DataLoader(df_test.iloc[:, 1:-1].values.astype(np.float32), batch_size=32,
                            shuffle=False)
     lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['y'], r=R_aae)
+    lst_val = lst_score.copy()
     print('Original')
     print(classification_report(y_true=df_test['y'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['y'], y_pred=lst_pred))
@@ -273,8 +277,10 @@ def get_pretrain_results_adult(aae_trainer, df_test, test_do):
     print(f"AUC-PR: {average_precision_score(y_true=df_test['y'], y_score=lst_score)}")
     print(f"AUC-ROC: {roc_auc_score(y_true=df_test['y'], y_score=lst_score)}")
     df_org['pred_do'] = lst_pred
-
-    return df_org
+    if val == 0:
+        return df_org
+    else:
+        return df_org, df_test, lst_val, R_aae
 
 
 def retrain_split(gaes, df_train, df_eval, scaler, device='cuda:0', adult=0):
@@ -328,10 +334,11 @@ def retrain_split(gaes, df_train, df_eval, scaler, device='cuda:0', adult=0):
 
     return train_iter, eval_iter
 
-def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None):
+def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scaler=None, val=0):
     R_aae = aae_trainer.max_dist * ratio
     test_iter = DataLoader(scaler.transform(df_test.iloc[:, 1:-3].values.astype(np.float32)), batch_size=32, shuffle=False)
     lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['label'], r=R_aae)
+    lst_val = lst_score.copy()
     print('Original')
     print(classification_report(y_true=df_test['label'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['label'], y_pred=lst_pred))
@@ -363,15 +370,18 @@ def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scale
         print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_score)}")
         print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_score)}")
         df_ad['pred_cf'] = lst_pred
+    if val == 0:
+        return df_ad
+    else:
+        return df_ad, df_test, lst_val, R_aae
 
-    return df_ad
 
-
-def get_retrain_results_adult(aae_trainer, df_test, test_do):
+def get_retrain_results_adult(aae_trainer, df_test, test_do, val=0):
     R_aae = aae_trainer.max_dist
     test_iter = DataLoader(df_test.iloc[:, 1:-1].values.astype(np.float32), batch_size=32,
                            shuffle=False)
     lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['y'], r=R_aae)
+    lst_val = lst_score.copy()
     print('Original')
     print(classification_report(y_true=df_test['y'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['y'], y_pred=lst_pred))
@@ -389,8 +399,10 @@ def get_retrain_results_adult(aae_trainer, df_test, test_do):
     print(f"AUC-PR: {average_precision_score(y_true=df_test['y'], y_score=lst_score)}")
     print(f"AUC-ROC: {roc_auc_score(y_true=df_test['y'], y_score=lst_score)}")
     df_ad['pred_do'] = lst_pred
-
-    return df_ad
+    if val == 0:
+        return df_ad
+    else:
+        return df_ad, df_test, lst_val, R_aae
 
 
 def get_fairness_result(df_org, df_ad, cf=0):
@@ -483,26 +495,30 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
 
 
 def compas_preprocessing(dir='data/compas-scores-two-years.txt', n_train=2000, n_test=2000):
-    df = pd.read_csv(dir, usecols=['race', 'sex', 'age', 'juv_fel_count', 'decile_score', 'juv_misd_count',
-                                   'juv_other_count', 'priors_count', 'two_year_recid'])
+    df = pd.read_csv('data/compas-scores-two-years.txt', usecols=['race', 'sex', 'age', 'juv_fel_count', 'decile_score', \
+                                                                  'juv_misd_count', 'juv_other_count', 'priors_count', \
+                                                                  'score_text', 'two_year_recid'])
     df_sel = df.loc[df['race'].isin(['African-American', 'Caucasian'])]
-    df_sel = df_sel[['race', 'sex', 'age', 'juv_fel_count', 'decile_score', 'juv_misd_count', 'juv_other_count',
-                     'priors_count','two_year_recid']]
-    df_sel.rename(columns={'two_year_recid':'y'}, inplace=True)
-    df_sel.loc[df_sel['race'] == 'African-American', 'race'] = 1
-    df_sel.loc[df_sel['race'] == 'Caucasian', 'race'] = 0
+    df_sel = df_sel[['race', 'sex', 'age', 'juv_fel_count', 'juv_misd_count', 'juv_other_count', 'priors_count', \
+                     'decile_score', 'two_year_recid']]
+    # juvenile_misdemeanors_count; felony
+    df_sel.loc[df_sel['race'] == 'African-American', 'race'] = -1
+    df_sel.loc[df_sel['race'] == 'Caucasian', 'race'] = 1
     df_sel.loc[df_sel['sex'] == 'Male', 'sex'] = 0
     df_sel.loc[df_sel['sex'] == 'Female', 'sex'] = 1
+    df_sel.rename(columns={'two_year_recid': 'y'}, inplace=True)
     df_sel.reset_index(drop=True, inplace=True)
+
     # scaler = MinMaxScaler((-3, 3))
     scaler = MinMaxScaler()
-    df_sel.iloc[:,1:-1] = scaler.fit_transform(df_sel.iloc[:,1:-1].values)
-    df_n = df_sel.loc[df_sel['y'] == 0]
-    df_n = df_n.sample(len(df_n), random_state=42)
-    df_ab = df_sel.loc[df_sel['y'] == 1]
-    df_ab = df_ab.sample(len(df_ab), random_state=42)
-    df_train = df_n.iloc[:n_train]
-    df_test = pd.concat([df_n.iloc[n_train:n_train+n_test], df_ab.iloc[:int(0.2*n_test)]])
+    df_n = df_sel.loc[df_sel['y'] == 0].copy()
+    df_n.iloc[:,1:-1] = scaler.fit_transform(df_n.iloc[:,1:-1].values)
+    df_n = df_n.sample(n=len(df_n), random_state=42)
+    df_ab = df_sel.loc[df_sel['y'] == 1].copy()
+    df_ab = df_ab.sample(n=len(df_ab), random_state=42)
+    df_ab.iloc[:, 1:-1] = scaler.transform(df_ab.iloc[:, 1:-1].values)
+    df_train = df_n.iloc[:n_train].copy()
+    df_test = pd.concat([df_n.iloc[n_train:], df_ab.iloc[:int(0.3*len(df_n.iloc[n_train:]))]])
     df_train.reset_index(drop=True, inplace=True)
     df_test.reset_index(drop=True, inplace=True)
     return df_train, df_test

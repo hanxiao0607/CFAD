@@ -170,7 +170,7 @@ def get_args():
 
     parser.add_argument('--quantile',
                         type=float,
-                        default=0.95,
+                        default=0.85,
                         help='quantile for reconstruction error')
 
 

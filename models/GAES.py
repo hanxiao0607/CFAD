@@ -110,6 +110,7 @@ class GAES(nn.Module):
         return X_hat.to(self.device)
 
     def get_result(self, X, do=0, p=0):
+        self.eval()
         ordered_vertices = list(nx.topological_sort(self.G))
         X_hat = self.forward(X)
         X_noise = (X - X_hat).cpu()

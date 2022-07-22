@@ -119,12 +119,12 @@ def get_args():
 
     parser.add_argument('--graph_thres',
                         type=float,
-                        default=0.3,
+                        default=0.2,
                         help='Threshold to filter out small values in graph')
 
     parser.add_argument('--device',
                         type=str,
-                        default='cuda:0',
+                        default='cuda:1',
                         help='Device type')
 
     parser.add_argument('--n_feature',
@@ -140,7 +140,7 @@ def get_args():
 
     parser.add_argument('--aae_pretrain_epochs',
                         type=int,
-                        default=100,
+                        default=50,
                         help='AAE max pre-training epochs')
 
     parser.add_argument('--aae_retrain_epochs',
@@ -160,7 +160,7 @@ def get_args():
 
     parser.add_argument('--ae_retrain_lr',
                          type=float,
-                         default=1e-7,
+                         default=1e-5,
                          help='autoencoder lr for retrain')
 
     parser.add_argument('--discriminator_retrain_lr',
@@ -170,7 +170,7 @@ def get_args():
 
     parser.add_argument('--quantile',
                         type=float,
-                        default=0.75,
+                        default=0.85,
                         help='quantile for reconstruction error')
 
 

@@ -60,15 +60,18 @@ def main():
     utils.set_seed(options['seed'])
 
     # Get dataset
-    print('Start loading synthetic data')
+    print('Start loading adult data')
     df_train, df_test, df_test_cf = utils.load_data(1)
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(df_train.iloc[:, 1:-1].values)
-    X_test = scaler.transform(df_test.iloc[:, 1:-1].values)
+    # scaler = MinMaxScaler()
+    # X_train = scaler.fit_transform(df_train.iloc[:, 1:-1].values)
+    # X_test = scaler.transform(df_test.iloc[:, 1:-1].values)
+    X_train = df_train.iloc[:, 1:-1].values
+    X_test = df_test.iloc[:, 1:-1].values
     y_test = df_test['y'].values
-    X_test_cf = scaler.transform(df_test_cf.values)
+    # X_test_cf = scaler.transform(df_test_cf.values)
+    X_test_cf = df_test_cf.values
     y_test_cf = df_test['y'].values
-    pca = PCA.PCA(threshold=0.2)
+    pca = PCA.PCA(threshold=2)
     pca.fit(X_train)
     y_pred, y_score = pca.predict(X_test)
     y_pred_cf, y_score_cf = pca.predict(X_test_cf)
@@ -107,13 +110,16 @@ def main():
     # Get dataset
     print('Start loading synthetic data')
     df_train, df_test, df_test_cf = utils.load_data(2)
-    scaler = MinMaxScaler()
-    X_train = scaler.fit_transform(df_train.iloc[:, 1:-1].values)
-    X_test = scaler.transform(df_test.iloc[:, 1:-1].values)
+    # scaler = MinMaxScaler()
+    # X_train = scaler.fit_transform(df_train.iloc[:, 1:-1].values)
+    # X_test = scaler.transform(df_test.iloc[:, 1:-1].values)
+    X_train = df_train.iloc[:, 1:-1].values
+    X_test = df_test.iloc[:, 1:-1].values
     y_test = df_test['y'].values
-    X_test_cf = scaler.transform(df_test_cf.values)
+    # X_test_cf = scaler.transform(df_test_cf.values)
+    X_test_cf = df_test_cf.values
     y_test_cf = df_test['y'].values
-    pca = PCA.PCA(threshold=0.2)
+    pca = PCA.PCA(threshold=0.02)
     pca.fit(X_train)
     y_pred, y_score = pca.predict(X_test)
     y_pred_cf, y_score_cf = pca.predict(X_test_cf)

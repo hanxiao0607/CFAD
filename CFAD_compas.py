@@ -43,7 +43,6 @@ def main():
                                        save_name='output/thresholded_recovered_graph.png')
 
     analyze_utils.plot_single_graph(W_est, save_name='output/compas_A.png')
-
     print('Start training GAES')
     gaes = GAES_trainer.GAESTrainner(gae.net.encoder,
                                      df_train.iloc[:, :-1].values.reshape(-1, options['d'], options['x_dim']).astype(
@@ -56,6 +55,7 @@ def main():
         do=1).detach().cpu().numpy().reshape(len(df_test), -1)[:, 1:]
     pd.DataFrame(test_do).to_csv('data/compas_do.csv')
     print('Start pretrain AAE')
+    utils.set_seed(options['seed'])
     scaler = StandardScaler()
     train_iter, eval_iter, scaler = utils.pretrain_split(df_train.iloc[:int(0.9 * len(df_train))],
                                                          df_train.iloc[int(0.9 * len(df_train)):], scaler, 1)
