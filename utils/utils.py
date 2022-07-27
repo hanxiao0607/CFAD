@@ -237,11 +237,12 @@ def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scal
     # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
     # df_org['pred_do'] = lst_pred
 
-
+    lst_val_cf = []
     if len(df_test_cf) >= 1:
         test_iter = DataLoader(scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19)), batch_size=32,
                                shuffle=False)
         lst_pred, lst_score  = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+        lst_val_cf = lst_score.copy()
         print('CF')
         print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
         print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
@@ -251,7 +252,7 @@ def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scal
     if val == 0:
         return df_org
     else:
-        return df_org, df_test, lst_val, R_aae
+        return df_org, df_test, lst_val, lst_val_cf, R_aae
 
 
 def get_pretrain_results_adult(aae_trainer, df_test, test_do, val=0):
@@ -271,6 +272,7 @@ def get_pretrain_results_adult(aae_trainer, df_test, test_do, val=0):
 
     test_iter = DataLoader(test_do.astype(np.float32),batch_size=32,shuffle=False)
     lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['y'], r=R_aae)
+    lst_val_cf = lst_score.copy()
     print('Generated CF')
     print(classification_report(y_true=df_test['y'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['y'], y_pred=lst_pred))
@@ -280,7 +282,7 @@ def get_pretrain_results_adult(aae_trainer, df_test, test_do, val=0):
     if val == 0:
         return df_org
     else:
-        return df_org, df_test, lst_val, R_aae
+        return df_org, df_test, lst_val, lst_val_cf, R_aae
 
 
 def retrain_split(gaes, df_train, df_eval, scaler, device='cuda:0', adult=0):
@@ -359,11 +361,12 @@ def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scale
     # print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
     # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
     # df_ad['pred_do'] = lst_pred
-
+    lst_val_cf = []
     if len(df_test_cf) >= 1:
         test_iter = DataLoader(scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19)), batch_size=32,
                                shuffle=False)
         lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
+        lst_val_cf = lst_score.copy()
         print('CF')
         print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
         print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
@@ -373,7 +376,7 @@ def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scale
     if val == 0:
         return df_ad
     else:
-        return df_ad, df_test, lst_val, R_aae
+        return df_ad, df_test, lst_val, lst_val_cf, R_aae
 
 
 def get_retrain_results_adult(aae_trainer, df_test, test_do, val=0):
@@ -393,6 +396,7 @@ def get_retrain_results_adult(aae_trainer, df_test, test_do, val=0):
 
     test_iter = DataLoader(test_do.astype(np.float32), batch_size=32, shuffle=False)
     lst_pred, lst_score = aae_trainer._evaluation(test_iter, df_test['y'], r=R_aae)
+    lst_val_cf = lst_score.copy()
     print('Generated CF')
     print(classification_report(y_true=df_test['y'], y_pred=lst_pred, digits=5))
     print(confusion_matrix(y_true=df_test['y'], y_pred=lst_pred))
@@ -402,7 +406,7 @@ def get_retrain_results_adult(aae_trainer, df_test, test_do, val=0):
     if val == 0:
         return df_ad
     else:
-        return df_ad, df_test, lst_val, R_aae
+        return df_ad, df_test, lst_val, lst_val_cf, R_aae
 
 
 def get_fairness_result(df_org, df_ad, cf=0):

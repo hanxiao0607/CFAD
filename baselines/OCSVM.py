@@ -4,6 +4,7 @@ from utils import config_utils, utils, synthetic_dataset, adult_config, compas_c
 from sklearn.metrics import classification_report, confusion_matrix, average_precision_score, roc_auc_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.svm import OneClassSVM
+import numpy as np
 
 
 def main():
@@ -138,6 +139,31 @@ def main():
     y_pred_cf[y_pred_cf == 1] = 0
     y_pred_cf[y_pred_cf == -1] = 1
     y_score_cf = scaler_minmax.fit_transform(ocsvm.score_samples(X_test_cf).reshape(-1, 1) * (-1))
+
+    # High Risk Gap
+    df_test_ad = df_test
+    df_test_ad['pred_val_after'] = y_score.copy()
+    df_test_ad['pred_y'] = y_pred.copy()
+    df_test_ad_cf = df_test_cf
+    df_test_ad_cf['race'] = df_test_ad['race'].values.copy()
+    df_test_ad_cf['y'] = df_test_ad['y'].values.copy()
+    df_test_ad_cf['pred_val_after'] = y_score_cf.copy()
+    df_test_ad_cf['pred_y'] = y_pred_cf.copy()
+    scaler = MinMaxScaler()
+    scaler = scaler.fit(df_test_ad['pred_val_after'].values.reshape(-1, 1))
+    African_American = scaler.transform(
+        df_test_ad.loc[((df_test_ad['race'] == -1) & (df_test_ad['decile_score'] >= 0.8))][
+            'pred_val_after'].values.reshape(-1, 1))
+    African_American_cf = scaler.transform(
+        df_test_ad_cf.loc[((df_test_ad['race'] == -1) & (df_test_ad['decile_score'] >= 0.8))][
+            'pred_val_after'].values.reshape(-1, 1))
+    Caucasian = scaler.transform(df_test_ad.loc[((df_test_ad['race'] == 1) & (df_test_ad['decile_score'] >= 0.8))][
+                                     'pred_val_after'].values.reshape(-1, 1))
+    Caucasian_cf = scaler.transform(
+        df_test_ad_cf.loc[((df_test_ad['race'] == 1) & (df_test_ad['decile_score'] >= 0.8))][
+            'pred_val_after'].values.reshape(-1, 1))
+    print(f'High risk gap: {abs(np.mean(African_American) - np.mean(African_American_cf)) + abs(np.mean(Caucasian) - np.mean(Caucasian_cf))}')
+
 
     print('Observed Results:')
     print(classification_report(y_true=y_test, y_pred=y_pred, digits=5))
