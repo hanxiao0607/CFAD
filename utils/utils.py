@@ -16,7 +16,7 @@ def set_seed(seed = 0):
     torch.backends.cudnn.deterministic = True
 
 
-def get_samples(dataset, upper=None, lower=None):
+def get_samples(dataset, upper=None, lower=None, seed=42):
     df_X = pd.DataFrame(dataset.X.reshape(-1, 20))
     df_X['y'] = dataset.y
     df_X_cf = pd.DataFrame(dataset.X_cf.reshape(-1, 20))
@@ -74,7 +74,7 @@ def get_samples(dataset, upper=None, lower=None):
     df_n = pd.DataFrame(lst_temp)
     df_n['changed'] = lst_changed
     df_n['label'] = 0
-    df_n = df_n.sample(n=len(df_n), random_state=42)
+    df_n = df_n.sample(n=len(df_n), random_state=seed)
 
     lst_temp = lst_ab_c.copy()
     lst_temp.extend(lst_ab_nc)
@@ -136,7 +136,7 @@ def get_samples(dataset, upper=None, lower=None):
     n_train = 3000
     df_train = pd.concat([df_n_nc_major.iloc[:n_train], df_n_c_major.iloc[:n_train], \
                           df_n_nc_minor.iloc[:n_train], df_n_c_minor.iloc[:n_train]])
-    df_train = df_train.sample(n=len(df_train), random_state=42)
+    df_train = df_train.sample(n=len(df_train), random_state=seed)
     df_eval_set = pd.concat([df_n_nc_major.iloc[0:1], df_n_c_major.iloc[0:1], \
                              df_n_nc_minor.iloc[0:1], df_n_c_minor.iloc[0:1]])
     df_test_n = pd.concat([df_n_nc_major.iloc[n_train:n_train+1000], df_n_c_major.iloc[n_train:n_train+1000], \
@@ -461,7 +461,7 @@ def load_data(flag=0):
         print('Please given a number from 0 to 2. 0 for synthetic, 1 for adult, and 2 for compas.')
     return df_train, df_test, df_test_cf
 
-def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
+def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000, seed=42):
     df_data = pd.read_csv(dir, header=None, names=['age', 'workclass', 'fnlwgt', 'education',
                                                                     'education-num', 'marital-status', 'occupation',
                                                                     'relationship', 'race', 'sex', 'capital-gain',
@@ -486,7 +486,7 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
                        'hours-per-week', 'y']]
     scaler = MinMaxScaler((-3,3))
     # scaler = MinMaxScaler()
-    df_data = df_data.sample(n=len(df_data), random_state=42)
+    df_data = df_data.sample(n=len(df_data), random_state=seed)
     df_data['y'] = df_data['y'].astype(int)
     df_n = df_data.loc[df_data['y'] == 0].copy()
     df_n.iloc[:, 1:-1] = scaler.fit_transform(df_n.iloc[:, 1:-1].values)
@@ -498,7 +498,7 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000):
     return df_train, df_test
 
 
-def compas_preprocessing(dir='data/compas-scores-two-years.txt', n_train=2000, n_test=2000):
+def compas_preprocessing(dir='data/compas-scores-two-years.txt', n_train=2000, n_test=2000, seed=42):
     df = pd.read_csv('data/compas-scores-two-years.txt', usecols=['race', 'sex', 'age', 'juv_fel_count', 'decile_score', \
                                                                   'juv_misd_count', 'juv_other_count', 'priors_count', \
                                                                   'score_text', 'two_year_recid'])
@@ -517,9 +517,9 @@ def compas_preprocessing(dir='data/compas-scores-two-years.txt', n_train=2000, n
     scaler = MinMaxScaler()
     df_n = df_sel.loc[df_sel['y'] == 0].copy()
     df_n.iloc[:,1:-1] = scaler.fit_transform(df_n.iloc[:,1:-1].values)
-    df_n = df_n.sample(n=len(df_n), random_state=42)
+    df_n = df_n.sample(n=len(df_n), random_state=seed)
     df_ab = df_sel.loc[df_sel['y'] == 1].copy()
-    df_ab = df_ab.sample(n=len(df_ab), random_state=42)
+    df_ab = df_ab.sample(n=len(df_ab), random_state=seed)
     df_ab.iloc[:, 1:-1] = scaler.transform(df_ab.iloc[:, 1:-1].values)
     df_train = df_n.iloc[:n_train].copy()
     df_test = pd.concat([df_n.iloc[n_train:], df_ab.iloc[:int(0.3*len(df_n.iloc[n_train:]))]])

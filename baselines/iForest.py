@@ -11,9 +11,11 @@ def main():
     parser = config_utils.get_args()
     args = parser.parse_args()
     options = vars(args)
+    seed = options['seed']
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    # utils.set_seed(options['seed'])
+    utils.set_seed(seed)
 
     # Get dataset
     print('Start loading synthetic data')
@@ -24,7 +26,7 @@ def main():
     y_test = df_test['label'].values
     X_test_cf = scaler.transform(df_test_cf.iloc[:, 1:-3].values)
     y_test_cf = df_test_cf['label'].values
-    iforest = IsolationForest(n_estimators=7, random_state=0)
+    iforest = IsolationForest(n_estimators=7, random_state=seed)
     iforest.fit(X_train)
     y_pred = iforest.predict(X_test)
     y_pred[y_pred==1] = 0
@@ -66,7 +68,8 @@ def main():
     options = vars(args)
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    # utils.set_seed(options['seed'])
+    utils.set_seed(seed)
 
     # Get dataset
     print('Start loading synthetic data')
@@ -77,7 +80,7 @@ def main():
     y_test = df_test['y'].values
     X_test_cf = scaler.transform(df_test_cf.values)
     y_test_cf = df_test['y'].values
-    iforest = IsolationForest(n_estimators=7, random_state=2022)
+    iforest = IsolationForest(n_estimators=7, random_state=seed)
     iforest.fit(X_train)
     y_pred = iforest.predict(X_test)
     y_pred[y_pred == 1] = 0
@@ -119,7 +122,8 @@ def main():
     options = vars(args)
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    # utils.set_seed(options['seed'])
+    utils.set_seed(seed)
 
     # Get dataset
     print('Start loading synthetic data')
@@ -130,7 +134,7 @@ def main():
     y_test = df_test['y'].values
     X_test_cf = scaler.transform(df_test_cf.values)
     y_test_cf = df_test['y'].values
-    iforest = IsolationForest(n_estimators=7, random_state=2022)
+    iforest = IsolationForest(n_estimators=7, random_state=seed)
     iforest.fit(X_train)
     y_pred = iforest.predict(X_test)
     y_pred[y_pred == 1] = 0

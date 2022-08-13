@@ -13,15 +13,15 @@ def main():
     options = vars(args)
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    utils.set_seed(options['env_seed'])
 
     # Get dataset
     print('Starting preprocessing compas dataset')
-    df_train, df_test = utils.compas_preprocessing(n_train=options['n_train'], n_test=options['n_test'])
+    df_train, df_test = utils.compas_preprocessing(n_train=options['n_train'], n_test=options['n_test'], seed=options['seed'])
     df_train.to_csv('data/compas_train.csv')
     df_test.to_csv('data/compas_test.csv')
     print('Finish preprocessing')
-    gae = GAE.GAE(len(df_train), options['d'], options['x_dim'], options['seed'], options['num_encoder_layers'],
+    gae = GAE.GAE(len(df_train), options['d'], options['x_dim'], options['env_seed'], options['num_encoder_layers'],
                   options['num_decoder_layers'],
                   options['hidden_size'], options['latent_dim'], options['l1_graph_penalty'], options['learning_rate'],
                   options['device'], options['n_feature'])

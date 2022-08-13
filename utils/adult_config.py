@@ -4,6 +4,11 @@ def get_args():
     parser = ArgumentParser()
 
     ##### General settings #####
+    parser.add_argument('--env_seed',
+                        type=int,
+                        default=0,
+                        help='Env seed')
+
     parser.add_argument('--seed',
                         type=int,
                         default=0,
@@ -124,7 +129,7 @@ def get_args():
 
     parser.add_argument('--device',
                         type=str,
-                        default='cuda:1',
+                        default='cuda:0',
                         help='Device type')
 
     parser.add_argument('--n_feature',
@@ -170,7 +175,7 @@ def get_args():
 
     parser.add_argument('--quantile',
                         type=float,
-                        default=0.85,
+                        default=0.95,
                         help='quantile for reconstruction error')
 
 

@@ -11,9 +11,9 @@ def main():
     parser = config_utils.get_args()
     args = parser.parse_args()
     options = vars(args)
-
+    seed = options['seed']
     # Reproducibility
-    utils.set_seed(options['seed'])
+    utils.set_seed(seed)
 
     # Get dataset
     print('Start loading synthetic data')
@@ -65,7 +65,7 @@ def main():
     options = vars(args)
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    utils.set_seed(seed)
 
     # Get dataset
     print('Start loading synthetic data')
@@ -117,7 +117,7 @@ def main():
     options = vars(args)
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    utils.set_seed(seed)
 
     # Get dataset
     print('Start loading synthetic data')

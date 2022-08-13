@@ -4,9 +4,14 @@ def get_args():
     parser = ArgumentParser()
 
     ##### General settings #####
-    parser.add_argument('--seed',
+    parser.add_argument('--env_seed',
                         type=int,
                         default=0,
+                        help='Env seed')
+
+    parser.add_argument('--seed',
+                        type=int,
+                        default=1024,
                         help='Random seed')
 
     ##### Dataset settings #####

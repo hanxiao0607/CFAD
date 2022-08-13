@@ -10,7 +10,7 @@ def main():
     options = vars(args)
 
     # Reproducibility
-    utils.set_seed(options['seed'])
+    utils.set_seed(options['env_seed'])
 
     # Get dataset
     print('Starting generate synthetic data')
@@ -18,9 +18,9 @@ def main():
                                options['noise_scale'], options['dataset_type'], options['x_dim'], options['alpha_cos'])
     print('Finish generating synthetic data')
     print('Starting split synthetic data')
-    df_train, df_eval, df_test, df_eval_set, df_train_cf, df_eval_cf, df_test_cf, df_eval_set_cf = utils.get_samples(dataset)
+    df_train, df_eval, df_test, df_eval_set, df_train_cf, df_eval_cf, df_test_cf, df_eval_set_cf = utils.get_samples(dataset, seed=options['seed'])
     print('Initial GAE')
-    gae = GAE.GAE(len(df_train), options['d'], options['x_dim'], options['seed'], options['num_encoder_layers'],
+    gae = GAE.GAE(len(df_train), options['d'], options['x_dim'], options['env_seed'], options['num_encoder_layers'],
                         options['num_decoder_layers'],
                         options['hidden_size'], options['latent_dim'], options['l1_graph_penalty'], options['learning_rate'], options['device'])
 
