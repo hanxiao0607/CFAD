@@ -108,9 +108,6 @@ class GAE(object):
         self.net = Net(self.n, self.d, self.x_dim, self.num_encoder_layer, self.num_decoder_layer, self.hidden_dim,
                        self.latent_dim, device=device, seed=seed).to(self.device)
 
-        # for name, param in self.net.named_parameters():
-        #     if param.requires_grad:
-        #         print(name)
         self.n_features = n_feature
 
     def _get_mse(self, X, output):

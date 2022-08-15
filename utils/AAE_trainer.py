@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch
 import numpy as np
-from tqdm import tqdm
 from models import AAE
 
 
@@ -62,11 +61,6 @@ class AAETrainer(nn.Module):
                 do = batch[1].to(self.device).long()
                 _, decoded, do_hat = self.dae.forward(x, self.device)
                 dist = ((decoded - x) ** 2).sum(axis=1)
-                # if pretrain:
-                #     dist = ((decoded - x) ** 2).sum(axis=1)
-                # else:
-                #     idx = (do == 0).nonzero().view(-1)
-                #     dist = ((decoded[idx] - x[idx]) ** 2).sum(axis=1)
                 lst_dist.extend(dist.detach().cpu().numpy().reshape(-1))
                 loss1 = loss_mse(decoded, x)
                 loss2 = loss_ce(do_hat, do)
@@ -81,8 +75,6 @@ class AAETrainer(nn.Module):
                     torch.save(self.state_dict(), 'saved_models/aae_checkpoint.pt')
                     self.max_dist = np.quantile(np.array(lst_dist), self.quantile)
             else:
-                #                 if mse_loss*self.beta+ce_loss < min_loss:
-                #                 if mse_loss < min_loss:
                 torch.save(self.state_dict(), 'saved_models/aae_checkpoint.pt')
                 self.max_dist = np.quantile(np.array(lst_dist), self.quantile)
 
@@ -103,7 +95,7 @@ class AAETrainer(nn.Module):
             lst_dist.extend(dist.detach().cpu().numpy())
             lst_pred.extend([1 if i > r else 0 for i in dist])
         loss_mean = np.mean(lst_loss)
-        print(f'Final Evalution loss for {loss_mean}')
+        # print(f'Final Evalution loss for {loss_mean}')
         print('-' * 60)
 
         return lst_pred, np.array(lst_dist).reshape(-1, 1)

@@ -21,14 +21,11 @@ def get_samples(dataset, upper=None, lower=None, seed=42):
     df_X['y'] = dataset.y
     df_X_cf = pd.DataFrame(dataset.X_cf.reshape(-1, 20))
     df_X_cf['y'] = dataset.y_cf
-    # lst_y = df_X['y'].values
     lst_y = np.array(np.concatenate((df_X['y'].values, df_X_cf['y'].values)))
     if (upper is None) or (lower is None):
         ab_upper = np.quantile(lst_y, 0.99)
         ab_cf_uupper = np.quantile(lst_y, 0.90)
         ab_cf_ulower = np.quantile(lst_y, 0.85)
-        # ab_cf_lupper = np.quantile(lst_y, 0.05)
-        # ab_cf_llower = np.quantile(lst_y, 0.04)
         n_cf_upper = np.quantile(lst_y, 0.7)
         n_cf_lower = np.quantile(lst_y, 0.68)
         ab_lower = np.quantile(lst_y, 0.01)
@@ -40,7 +37,6 @@ def get_samples(dataset, upper=None, lower=None, seed=42):
     df_n = df_X.loc[(df_X['y'] > n_lower) & (df_X['y'] < n_upper)]
     df_n_cf = df_X_cf.loc[df_n.index]
 
-    # df_n_c_cf = df_n_cf.loc[((df_n_cf['y'] > ab_cf_ulower) & (df_n_cf['y'] < ab_cf_uupper)) | ((df_n_cf['y'] > ab_cf_llower) & (df_n_cf['y'] < ab_cf_lupper))]
     df_n_c_cf = df_n_cf.loc[(df_n_cf['y'] > ab_cf_ulower) & (df_n_cf['y'] < ab_cf_uupper)]
     df_n_c = df_n.loc[df_n_c_cf.index]
     lst_n_c.extend(df_n_c.values)
@@ -67,10 +63,8 @@ def get_samples(dataset, upper=None, lower=None, seed=42):
     lst_temp = lst_n_c.copy()
     lst_temp.extend(lst_n_nc)
 
-    #     lst_temp.extend(lst_n_m)
     lst_changed = [1 for _ in range(len(lst_n_c))]
     lst_changed.extend([0 for _ in range(len(lst_n_nc))])
-    #     lst_changed.extend([-1 for _ in range(len(lst_n_m))])
     df_n = pd.DataFrame(lst_temp)
     df_n['changed'] = lst_changed
     df_n['label'] = 0
@@ -78,23 +72,18 @@ def get_samples(dataset, upper=None, lower=None, seed=42):
 
     lst_temp = lst_ab_c.copy()
     lst_temp.extend(lst_ab_nc)
-    #     lst_temp.extend(lst_ab_m)
     lst_changed = [1 for _ in range(len(lst_ab_c))]
     lst_changed.extend([0 for _ in range(len(lst_ab_nc))])
-    #     lst_changed.extend([-1 for _ in range(len(lst_ab_m))])
     df_ab = pd.DataFrame(lst_temp)
     df_ab['changed'] = lst_changed
     df_ab['label'] = 1
 
     lst_temp = lst_n_c_cf.copy()
     lst_temp.extend(lst_n_nc_cf)
-    #     lst_temp.extend(lst_n_m_cf)
     lst_changed = [1 for _ in range(len(lst_n_c_cf))]
     lst_changed.extend([0 for _ in range(len(lst_n_nc_cf))])
-    #     lst_changed.extend([-1 for _ in range(len(lst_n_m_cf))])
     lst_label = [1 for _ in range(len(lst_n_c_cf))]
     lst_label.extend([0 for _ in range(len(lst_n_nc_cf))])
-    #     lst_label.extend([0 for _ in range(len(lst_n_m_cf))])
     df_n_cf = pd.DataFrame(lst_temp)
     df_n_cf['changed'] = lst_changed
     df_n_cf['label'] = lst_label
@@ -102,13 +91,10 @@ def get_samples(dataset, upper=None, lower=None, seed=42):
 
     lst_temp = lst_ab_c_cf.copy()
     lst_temp.extend(lst_ab_nc_cf)
-    #     lst_temp.extend(lst_ab_m_cf)
     lst_changed = [1 for _ in range(len(lst_ab_c_cf))]
     lst_changed.extend([0 for _ in range(len(lst_ab_nc_cf))])
-    #     lst_changed.extend([-1 for _ in range(len(lst_ab_m_cf))])
     lst_label = [0 for _ in range(len(lst_ab_c_cf))]
     lst_label.extend([1 for _ in range(len(lst_ab_nc_cf))])
-    #     lst_label.extend([0 for _ in range(len(lst_ab_m_cf))])
     df_ab_cf = pd.DataFrame(lst_temp)
     df_ab_cf['changed'] = lst_changed
     df_ab_cf['label'] = lst_label
@@ -117,19 +103,15 @@ def get_samples(dataset, upper=None, lower=None, seed=42):
     minor = int(major * 0.1)
     df_n_nc_major = df_n.loc[(df_n[0] == 1) & (df_n['changed'] == 0)]
     df_n_c_major = df_n.loc[(df_n[0] == 1) & (df_n['changed'] == 1)]
-    #     df_n_m_major = df_n.loc[(df_n[0]==1) & (df_n['changed']==-1)]
     df_n_nc_minor = df_n.loc[(df_n[0] == -1) & (df_n['changed'] == 0)]
     df_n_c_minor = df_n.loc[(df_n[0] == -1) & (df_n['changed'] == 1)]
-    #     df_n_m_minor = df_n.loc[(df_n[0]==-1) & (df_n['changed']==-1)]
     print(f"Normal major nc:{len(df_n_nc_major)}, c:{len(df_n_c_major)}")
     print(f"Normal minor nc:{len(df_n_nc_minor)}, c:{len(df_n_c_minor)}")
 
     df_ab_nc_major = df_ab.loc[(df_ab[0] == 1) & (df_ab['changed'] == 0)]
     df_ab_c_major = df_ab.loc[(df_ab[0] == 1) & (df_ab['changed'] == 1)]
-    #     df_ab_m_major = df_ab.loc[(df_ab[0]==1) & (df_ab['changed']==-1)]
     df_ab_nc_minor = df_ab.loc[(df_ab[0] == -1) & (df_ab['changed'] == 0)]
     df_ab_c_minor = df_ab.loc[(df_ab[0] == -1) & (df_ab['changed'] == 1)]
-    #     df_ab_m_minor = df_ab.loc[(df_ab[0]==-1) & (df_ab['changed']==-1)]
     print(f"Abnormal major nc:{len(df_ab_nc_major)}, c:{len(df_ab_c_major)}")
     print(f"Abnormal minor nc:{len(df_ab_nc_minor)}, c:{len(df_ab_c_minor)}")
 
@@ -190,7 +172,6 @@ def pretrain_split(df_train, df_eval, scaler, adult=0):
 
         train_iter = DataLoader(CFDataset(torch.tensor(train_X.astype(np.float32)), torch.LongTensor(lst_temp)),
                                 batch_size=128, shuffle=True, worker_init_fn=np.random.seed(0))
-        # print(len(train_X))
         eval_X = scaler.transform(df_eval.iloc[:, 1:-3].values.astype(np.float32))
         lst_temp = [1 for _ in range(len(eval_X))]
 
@@ -203,7 +184,6 @@ def pretrain_split(df_train, df_eval, scaler, adult=0):
 
         train_iter = DataLoader(CFDataset(torch.tensor(train_X.astype(np.float32)), torch.LongTensor(lst_temp)),
                                 batch_size=128, shuffle=False, worker_init_fn=np.random.seed(0))
-        # print(len(train_X))
         eval_X = df_eval.iloc[:, 1:-1].values.astype(np.float32)
         lst_temp = [1 for _ in range(len(eval_X))]
 
@@ -224,18 +204,6 @@ def get_pretrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scal
     df_org = pd.DataFrame()
     df_org['label'] = df_test['label'].values
     df_org['pred'] = lst_pred
-
-    # test_do = gaes.net.get_result(
-    #     torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).to(device),
-    #     do=1).detach().cpu().numpy()
-    # test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
-    # lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
-    # print('Do')
-    # print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
-    # print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
-    # print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    # df_org['pred_do'] = lst_pred
 
     lst_val_cf = []
     if len(df_test_cf) >= 1:
@@ -289,7 +257,6 @@ def retrain_split(gaes, df_train, df_eval, scaler, device='cuda:0', adult=0):
     if not adult:
         X_do = gaes.net.get_result(torch.Tensor(df_train.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).to(device),
                                    do=1).detach().cpu().numpy().reshape(-1, 20)[:, 1:]
-        # X_do = np.delete(X_do, df_train_cf.loc[df_train_cf['label'] == 1].index, axis=0)
         train_X_do = X_do
         train_X_or = df_train.iloc[:, 1:-3].values.astype(np.float32)
         lst_temp = [1 for _ in range(len(train_X_do))]
@@ -313,7 +280,6 @@ def retrain_split(gaes, df_train, df_eval, scaler, device='cuda:0', adult=0):
         X_do = gaes.net.get_result(
             torch.Tensor(df_train.iloc[:, :-1].values.astype(np.float32).reshape(len(df_train), -1, 1)).to(device),
             do=1).detach().cpu().numpy().reshape(len(df_train), -1)[:, 1:]
-        # X_do = np.delete(X_do, df_train_cf.loc[df_train_cf['label'] == 1].index, axis=0)
         train_X_do = X_do
         train_X_or = df_train.iloc[:, 1:-1].values.astype(np.float32)
         lst_temp = [1 for _ in range(len(train_X_do))]
@@ -350,17 +316,6 @@ def get_retrain_result(gaes, aae_trainer, df_test, df_test_cf=[], ratio=1, scale
     df_ad['label'] = df_test['label'].values
     df_ad['pred'] = lst_pred
 
-    # test_do = gaes.net.get_result(
-    #     torch.Tensor(df_test.iloc[:, :-3].values.astype(np.float32).reshape(-1, 20, 1)).cuda(),
-    #     do=1).detach().cpu().numpy()
-    # test_iter = DataLoader(test_do.reshape(-1, 20)[:, 1:], batch_size=32, shuffle=False)
-    # lst_pred = aae_trainer._evaluation(test_iter, df_test_cf['label'], r=R_aae)
-    # print('Do')
-    # print(classification_report(y_true=df_test_cf['label'], y_pred=lst_pred, digits=5))
-    # print(confusion_matrix(y_true=df_test_cf['label'], y_pred=lst_pred))
-    # print(f"AUC-PR: {average_precision_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    # print(f"AUC-ROC: {roc_auc_score(y_true=df_test_cf['label'], y_score=lst_pred)}")
-    # df_ad['pred_do'] = lst_pred
     lst_val_cf = []
     if len(df_test_cf) >= 1:
         test_iter = DataLoader(scaler.transform(df_test_cf.iloc[:, 1:-3].values.astype(np.float32).reshape(-1, 19)), batch_size=32,
@@ -410,18 +365,8 @@ def get_retrain_results_adult(aae_trainer, df_test, test_do, val=0):
 
 
 def get_fairness_result(df_org, df_ad, cf=0):
-    # df_org['do_changed'] = df_org['pred_do'] - df_org['pred']
-    # df_ad['do_changed'] = df_ad['pred_do'] - df_ad['pred']
     assert len(df_org) == len(df_ad), 'Length should be the same!'
     total = len(df_org)
-    # df_org_do = df_org.groupby(['do_changed']).count().reset_index(drop=False)
-    # before_do = sum(df_org_do.loc[df_org_do['do_changed'] != 0]['label'].values)
-    # df_ad_do = df_ad.groupby(['do_changed']).count().reset_index(drop=False)
-    # after_do = sum(df_ad_do.loc[df_ad_do['do_changed'] != 0]['label'].values)
-    # print('Results for DO samples')
-    # print(f'Without fair, the prediction changed: {before_do/total}')
-    # print(f'With fair, the prediction changed: {after_do/total}')
-
 
     if cf:
         df_org['cf_changed'] = df_org['pred_cf'] - df_org['pred']
@@ -485,7 +430,6 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000, seed=
                        'relationship', 'capital-gain', 'capital-loss',
                        'hours-per-week', 'y']]
     scaler = MinMaxScaler((-3,3))
-    # scaler = MinMaxScaler()
     df_data = df_data.sample(n=len(df_data), random_state=seed)
     df_data['y'] = df_data['y'].astype(int)
     df_n = df_data.loc[df_data['y'] == 0].copy()
@@ -493,7 +437,6 @@ def adult_preprocessing(dir='data/adult.data', n_train=10000, n_test=2000, seed=
     df_ab = df_data.loc[df_data['y'] == 1].copy()
     df_ab.iloc[:, 1:-1] = scaler.transform(df_ab.iloc[:, 1:-1].values)
     df_train = df_n.iloc[:n_train]
-    # df_test = pd.concat([df_n.iloc[n_train:n_train+4000], df_ab.iloc[:800]])
     df_test = pd.concat([df_n.iloc[n_train:n_train+n_test], df_ab.iloc[:int(0.2*n_test)]])
     return df_train, df_test
 
@@ -513,7 +456,6 @@ def compas_preprocessing(dir='data/compas-scores-two-years.txt', n_train=2000, n
     df_sel.rename(columns={'two_year_recid': 'y'}, inplace=True)
     df_sel.reset_index(drop=True, inplace=True)
 
-    # scaler = MinMaxScaler((-3, 3))
     scaler = MinMaxScaler()
     df_n = df_sel.loc[df_sel['y'] == 0].copy()
     df_n.iloc[:,1:-1] = scaler.fit_transform(df_n.iloc[:,1:-1].values)

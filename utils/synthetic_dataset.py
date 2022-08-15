@@ -136,8 +136,6 @@ class SyntheticDataset(object):
                     if dataset_type == 'nonlinear_1':
                         noise = np.random.normal(scale=noise_scale, size=n)
                         lst_noise.append(noise)
-                        #                         if ind == ind_ab:
-                        #                             noise = np.random.normal(scale=noise_scale*3, size=n)
                         X[:, j, 0] = eta + noise
                         X_cf[:, j, 0] = eta_cf + noise
                     elif dataset_type in ('nonlinear_2', 'nonlinear_3'):

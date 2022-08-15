@@ -29,11 +29,6 @@ class GAES(nn.Module):
 
         self.decoder = self._define_net(encoder=0)
 
-    #         self.ah_weight = nn.Parameter(torch.rand(self.d))
-    #         self.ah_weight.requires_grad = True
-    #         self.ah_bias = nn.Parameter(torch.rand(self.d))
-    #         self.ah_bias.requires_grad = True
-
     def _normalize_A(self):
         while 1:
             W_est = self.A.copy()
@@ -95,18 +90,13 @@ class GAES(nn.Module):
                     X_hat[:, j, 0] = torch.reshape(X, (-1, self.d, 1)).cpu()[:, j, 0].clone()
                 elif len(parents) == 1:
                     H = torch.reshape(self.encoder.forward(X), (-1, self.d, 1))
-                    #                     H_c = torch.reshape(H[:, parents, 0]*self.A_norm[parents, j], (-1, 1))
-                    #                     X_hat[:, j, 0] = torch.flatten(self.decoder.forward(H_c).cpu()).clone()
                     H_c = torch.reshape(H[:, parents, 0], (-1, 1))
                     X_hat[:, j, 0] = (torch.flatten(self.decoder.forward(H_c)) * self.A_norm[parents, j]).cpu().clone()
                 else:
                     H = torch.reshape(self.encoder.forward(X), (-1, self.d, 1))
-                    #                     H_c = torch.reshape(H[:, parents, 0].matmul(self.A_norm[parents, j]), (-1, 1))
-                    #                     X_hat[:, j, 0] = torch.flatten(self.decoder.forward(H_c).cpu()).clone()
                     H_c = torch.reshape(H[:, parents, 0], (-1, 1))
                     X_hat[:, j, 0] = torch.reshape(self.decoder.forward(H_c), (-1, len(parents))).matmul(
                         self.A_norm[parents, j]).cpu().clone()
-        #                     X_hat[:, j, 0] = torch.reshape(X, (-1, self.d, 1)).cpu()[:, j, 0].clone()
         return X_hat.to(self.device)
 
     def get_result(self, X, do=0, p=0):
@@ -132,16 +122,12 @@ class GAES(nn.Module):
                     elif len(parents) == 1:
                         H = torch.reshape(self.encoder.forward(torch.reshape(X_do_hat.to(self.device), (-1, 1))),
                                           (-1, self.d, 1))
-                        #                         H_c = torch.reshape(H[:, parents, 0]*self.A_norm[parents, j], (-1, 1))
-                        #                         X_do_hat[:, j, 0] = torch.flatten(self.decoder.forward(H_c).cpu()).clone() + X_noise[:, j, 0]
                         H_c = torch.reshape(H[:, parents, 0], (-1, 1))
                         X_do_hat[:, j, 0] = torch.flatten(
                             (self.decoder.forward(H_c) * self.A_norm[parents, j]).cpu()).clone() + X_noise[:, j, 0]
                     else:
                         H = torch.reshape(self.encoder.forward(torch.reshape(X_do_hat.to(self.device), (-1, 1))),
                                           (-1, self.d, 1))
-                        #                         H_c = torch.reshape(H[:, parents, 0].matmul(self.A_norm[parents, j]), (-1, 1))
-                        #                         X_do_hat[:, j, 0] = torch.flatten(self.decoder.forward(H_c).cpu()).clone() + X_noise[:, j, 0]
                         H_c = torch.reshape(H[:, parents, 0], (-1, 1))
                         X_do_hat[:, j, 0] = torch.reshape(self.decoder.forward(H_c), (-1, len(parents))).matmul(
                             self.A_norm[parents, j]).cpu().clone() + X_noise[:, j, 0]
