@@ -129,7 +129,7 @@ def get_args():
 
     parser.add_argument('--device',
                         type=str,
-                        default='cuda:1',
+                        default='cuda:0',
                         help='Device type')
 
     parser.add_argument('--n_feature',
