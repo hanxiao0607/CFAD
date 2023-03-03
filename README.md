@@ -1,6 +1,10 @@
-# CFAD
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-red.svg)](https://github.com/hanxiao0607/CFAD/blob/main/LICENSE)
+![Python 3.9](https://img.shields.io/badge/python-3.9-blue.svg)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fhanxiao0607%2FCFAD&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-A Pytorch implementation of CFAD
+# CFAD: Achieving <u>C</u>ounterfactual <u>F</u>airness for <u>A</u>nomaly <u>D</u>etection
+
+A Pytorch implementation of [CFAD]().
 
 ## Configuration
 - Ubuntu 20.04
@@ -14,4 +18,36 @@ A Pytorch implementation of CFAD
 - 64 GB Memory
 - NVIDIA GeForce RTX 2080 Ti
 
-Please check the requirements for more detailed information about the packages used in this project. Thanks!
+
+## Installation
+This code requires the packages listed in requirements.txt.
+A virtual environment is recommended to run this code
+
+On macOS and Linux:  
+```
+python3 -m pip install --user virtualenv
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+deactivate
+```
+Reference: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
+
+## Instructions
+Clone the template project, replacing ``my-project`` with the name of the project you are creating:
+
+        git clone https://github.com/hanxiao0607/CFAD.git my-project
+        cd my-project
+
+Run and test:
+
+        python3 CFAD_adult.py
+        or
+        python3 CFAD_compas.py
+        or
+        python3 CFAD_synthetic.py
+
+## Citation
+```
+
+```
