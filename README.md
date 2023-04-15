@@ -49,5 +49,10 @@ Run and test:
 
 ## Citation
 ```
-
+@article{han2023achieving,
+  title={Achieving Counterfactual Fairness for Anomaly Detection},
+  author={Han, Xiao and Zhang, Lu and Wu, Yongkai and Yuan, Shuhan},
+  journal={arXiv preprint arXiv:2303.02318},
+  year={2023}
+}
 ```
