@@ -4,7 +4,7 @@
 
 # CFAD: Achieving <u>C</u>ounterfactual <u>F</u>airness for <u>A</u>nomaly <u>D</u>etection
 
-A Pytorch implementation of [CFAD]([https://arxiv.org/abs/2303.02318](https://link.springer.com/chapter/10.1007/978-3-031-33374-3_5))/[arXiv](https://arxiv.org/abs/2303.02318).
+A Pytorch implementation of [CFAD](https://link.springer.com/chapter/10.1007/978-3-031-33374-3_5)/[arXiv](https://arxiv.org/abs/2303.02318).
 
 ## Configuration
 - Ubuntu 20.04
