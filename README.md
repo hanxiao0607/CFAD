@@ -5,20 +5,20 @@
 
 A Pytorch implementation of [CFAD](https://arxiv.org/abs/2303.02318).
 
-## Configuration
+## 🧰 Configuration
 - Ubuntu 20.04
 - NVIDIA driver 470.74
 - CUDA 11.1
 - Python 3.9.7
 - PyTorch 1.9.1
 
-##  Hardware
+## 🖥️ Hardware
 - Intel(R) Core(TM) i9-10900X CPU @ 3.70GHz
 - 64 GB Memory
 - NVIDIA GeForce RTX 2080 Ti
 
 
-## Installation
+## ⚙️ Installation
 This code requires the packages listed in requirements.txt.
 A virtual environment is recommended to run this code
 
@@ -32,7 +32,7 @@ deactivate
 ```
 Reference: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
 
-## Instructions
+## 🚀 Instructions
 Clone the template project, replacing ``my-project`` with the name of the project you are creating:
 
         git clone https://github.com/hanxiao0607/CFAD.git my-project
@@ -46,7 +46,7 @@ Run and test:
         or
         python3 CFAD_synthetic.py
 
-## Citation
+## 📄 Citation
 ```
 @inproceedings{han2023achieving,
   title={Achieving Counterfactual Fairness for Anomaly Detection},
